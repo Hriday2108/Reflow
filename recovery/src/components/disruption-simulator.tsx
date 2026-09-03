@@ -23,17 +23,10 @@ import {
   X,
   Loader2,
   Sparkles,
+  Crosshair,
 } from 'lucide-react';
 
-interface DisruptionSimulatorProps {
-  bookings: Booking[];
-  selectedBooking?: Booking | null;
-  onClearSelection?: () => void;
-  onTrigger: (bookingId: string, type: DisruptionType, severity: Severity, description: string) => Promise<void>;
-  isLoading: boolean;
-}
-
-interface ScenarioConfig {
+export interface ScenarioConfig {
   id: string;
   label: string;
   shortDescription: string;
@@ -47,6 +40,30 @@ interface ScenarioConfig {
   getDescription: (b: Booking) => string;
 }
 
+export function getTargetTypeNoun(targetTypes: BookingType[]): string {
+  if (targetTypes.length === 1) {
+    return targetTypes[0];
+  }
+  if (targetTypes.length === 2 && targetTypes.includes('activity') && targetTypes.includes('event')) {
+    return 'activity';
+  }
+  if (targetTypes.length === 2 && targetTypes.includes('flight') && targetTypes.includes('train')) {
+    return 'flight or train';
+  }
+  return 'booking';
+}
+
+export interface DisruptionSimulatorProps {
+  bookings: Booking[];
+  selectedBooking?: Booking | null;
+  onClearSelection?: () => void;
+  onTrigger: (bookingId: string, type: DisruptionType, severity: Severity, description: string) => Promise<void>;
+  isLoading: boolean;
+  targetSelectionScenario?: ScenarioConfig | null;
+  onStartTargetSelection?: (scenario: ScenarioConfig, eligibleBookings: Booking[]) => void;
+  onCancelTargetSelection?: () => void;
+}
+
 const typeIconMap: Record<BookingType, React.ElementType> = {
   flight: Plane,
   train: Train,
@@ -56,7 +73,7 @@ const typeIconMap: Record<BookingType, React.ElementType> = {
   event: CalendarDays,
 };
 
-const scenarios: ScenarioConfig[] = [
+export const scenarios: ScenarioConfig[] = [
   // ── Flight Scenarios ──────────────────────────────────
   {
     id: 'flight-delay',
@@ -234,6 +251,9 @@ export default function DisruptionSimulator({
   onClearSelection,
   onTrigger,
   isLoading,
+  targetSelectionScenario,
+  onStartTargetSelection,
+  onCancelTargetSelection,
 }: DisruptionSimulatorProps) {
   const [triggering, setTriggering] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<BookingType | 'all'>('all');
@@ -269,28 +289,36 @@ export default function DisruptionSimulator({
   };
 
   const handleTrigger = async (scenario: ScenarioConfig) => {
-    let targetBooking: Booking | undefined;
-
-    // If user has a selected node and it is eligible for this scenario, target it directly
-    if (selectedBooking && isSelectedBookingTargetable(scenario)) {
-      targetBooking = selectedBooking;
-    } else {
-      // Otherwise pick the first eligible booking of this type that is confirmed or at-risk
-      targetBooking = bookings.find(
-        (b) =>
-          scenario.targetTypes.includes(b.type) &&
-          (b.status === 'confirmed' || b.status === 'at-risk')
-      );
+    // If user clicks the scenario that is already active in target selection mode, cancel it
+    if (targetSelectionScenario?.id === scenario.id) {
+      onCancelTargetSelection?.();
+      return;
     }
 
-    if (!targetBooking) {
+    // Determine eligible bookings for this scenario
+    const eligibleBookings = bookings.filter(
+      (b) =>
+        scenario.targetTypes.includes(b.type) &&
+        (b.status === 'confirmed' || b.status === 'at-risk')
+    );
+
+    if (eligibleBookings.length === 0) {
       toast.error(`No eligible ${scenario.label.toLowerCase()} bookings available`, {
         description: 'All matching bookings are already disrupted, cancelled, or not found.',
       });
       return;
     }
 
+    // When eligible-booking count is greater than 1, enter "select target" mode
+    if (eligibleBookings.length > 1) {
+      onStartTargetSelection?.(scenario, eligibleBookings);
+      return;
+    }
+
+    // When eligible count is exactly 1, skip selection step entirely and apply directly
+    const targetBooking = eligibleBookings[0];
     setTriggering(scenario.id);
+    onCancelTargetSelection?.();
 
     try {
       await onTrigger(
@@ -327,7 +355,7 @@ export default function DisruptionSimulator({
                 <span className="text-sm font-semibold tracking-tight text-foreground">
                   Disruption Simulator
                 </span>
-                <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-medium tracking-wide uppercase rounded-full bg-primary/10 text-primary border border-primary/20">
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-medium tracking-wide uppercase rounded-full bg-primary/10 text-primary border border-primary/20">
                   Live
                 </span>
               </div>
@@ -429,12 +457,50 @@ export default function DisruptionSimulator({
       </CardHeader>
 
       <CardContent className="px-4 pb-4 pt-1">
+        {/* Inline Target Selection Prompt */}
+        <AnimatePresence>
+          {targetSelectionScenario && (
+            <motion.div
+              key="target-selection-prompt"
+              initial={{ opacity: 0, height: 0, scale: 0.95 }}
+              animate={{ opacity: 1, height: 'auto', scale: 1 }}
+              exit={{ opacity: 0, height: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="mb-3 p-2.5 rounded-xl border border-blue-500/40 bg-gradient-to-r from-blue-500/15 via-blue-500/10 to-indigo-500/10 shadow-sm flex items-center justify-between gap-2.5 overflow-hidden"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
+                  <Crosshair className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin" style={{ animationDuration: '8s' }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold leading-tight text-foreground">
+                    Which {getTargetTypeNoun(targetSelectionScenario.targetTypes)} is affected?
+                  </p>
+                  <p className="text-[11px] text-blue-600 dark:text-blue-300 font-medium leading-tight mt-0.5">
+                    Click a highlighted node.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onCancelTargetSelection}
+                className="px-2 py-1 text-[10px] font-medium rounded-lg bg-background/80 hover:bg-background border border-border/70 text-muted-foreground hover:text-foreground transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer shadow-xs"
+                title="Cancel target selection (Esc)"
+              >
+                <span>Cancel</span>
+                <kbd className="text-[9px] px-1 py-0.5 rounded bg-muted font-mono border border-border/50">Esc</kbd>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="grid grid-cols-2 gap-2">
           <AnimatePresence mode="popLayout">
             {visibleScenarios.map((scenario) => {
               const Icon = scenario.icon;
               const availableCount = getAvailableCount(scenario);
               const isTriggering = triggering === scenario.id;
+              const isTargetSelecting = targetSelectionScenario?.id === scenario.id;
 
               // Check if action can proceed
               let isDisabled = isLoading || isTriggering;
@@ -472,6 +538,10 @@ export default function DisruptionSimulator({
                     disabled={isDisabled}
                     className={`group relative w-full h-full min-h-[82px] py-2 px-2.5 flex flex-col justify-between items-start text-left rounded-xl transition-all duration-200 shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] ${
                       scenario.bgStyles
+                    } ${
+                      isTargetSelecting
+                        ? 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 ring-offset-background border-blue-500/60 shadow-md'
+                        : ''
                     } ${isDisabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer'}`}
                   >
                     <div className="w-full space-y-1">
@@ -495,15 +565,25 @@ export default function DisruptionSimulator({
                       </p>
                     </div>
 
-                    {/* Counter Badge */}
+                    {/* Counter / Status Badge */}
                     <div className="mt-1 w-full flex items-center justify-between">
-                      <Badge
-                        variant="secondary"
-                        className={`text-[9px] px-1.5 py-0 h-4 font-medium rounded-md border tracking-tight ${scenario.badgeStyles}`}
-                      >
-                        {statusNote}
-                      </Badge>
-                      {selectedBooking && isSelectedBookingTargetable(scenario) && (
+                      {isTargetSelecting ? (
+                        <Badge
+                          variant="secondary"
+                          className="text-[9px] px-1.5 py-0 h-4 font-semibold rounded-md border tracking-tight bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/40 flex items-center gap-1"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" />
+                          Selecting target...
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="secondary"
+                          className={`text-[9px] px-1.5 py-0 h-4 font-medium rounded-md border tracking-tight ${scenario.badgeStyles}`}
+                        >
+                          {statusNote}
+                        </Badge>
+                      )}
+                      {selectedBooking && isSelectedBookingTargetable(scenario) && !isTargetSelecting && (
                         <span className="text-[8.5px] font-medium text-primary flex items-center gap-0.5">
                           <Sparkles className="w-2.5 h-2.5" />
                           Target

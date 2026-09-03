@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import ItineraryGraph from '@/components/itinerary-graph';
 import BookingDetailPanel from '@/components/booking-detail-panel';
-import DisruptionSimulator from '@/components/disruption-simulator';
+import DisruptionSimulator, { type ScenarioConfig } from '@/components/disruption-simulator';
 import ImpactAnalysisPanel from '@/components/impact-analysis';
 import RecoveryOptions from '@/components/recovery-options';
 import ReflowLoader from '@/components/reflow-loader';
@@ -54,13 +53,36 @@ export default function DashboardPage() {
   const [recoveryOptions, setRecoveryOptions] = useState<RecoveryOption[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [impactAnalysis, setImpactAnalysis] = useState<ImpactAnalysis | null>(null);
+  const [targetSelectionScenario, setTargetSelectionScenario] = useState<ScenarioConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
+
+  // Determine selectable booking IDs when target selection is active
+  const selectableBookingIds = useMemo(() => {
+    if (!targetSelectionScenario) return [];
+    return bookings
+      .filter(
+        (b) =>
+          targetSelectionScenario.targetTypes.includes(b.type) &&
+          (b.status === 'confirmed' || b.status === 'at-risk')
+      )
+      .map((b) => b.id);
+  }, [targetSelectionScenario, bookings]);
+
+  // Cancel target selection on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && targetSelectionScenario) {
+        setTargetSelectionScenario(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [targetSelectionScenario]);
 
   // ── Data loading ───────────────────────────────────────
 
   const loadData = useCallback(async () => {
-    setIsLoading(true);
     try {
       const [tripData, bookingsData, depsData, disruptionsData, optionsData] = await Promise.all([
         fetchTrip(),
@@ -76,7 +98,6 @@ export default function DashboardPage() {
       setDisruptions(disruptionsData);
       setRecoveryOptions(optionsData);
 
-      // Compute impact analysis for the latest disruption
       if (disruptionsData.length > 0 && bookingsData.length > 0 && depsData.length > 0) {
         const latestDisruption = disruptionsData[0];
         const analysis = computeImpactAnalysis(latestDisruption, bookingsData, depsData);
@@ -93,8 +114,42 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let isMounted = true;
+    Promise.all([
+      fetchTrip(),
+      fetchBookings(),
+      fetchDependencies(),
+      fetchDisruptions(),
+      fetchAllRecoveryOptions(),
+    ])
+      .then(([tripData, bookingsData, depsData, disruptionsData, optionsData]) => {
+        if (!isMounted) return;
+        setTrip(tripData);
+        setBookings(bookingsData);
+        setDependencies(depsData);
+        setDisruptions(disruptionsData);
+        setRecoveryOptions(optionsData);
+
+        if (disruptionsData.length > 0 && bookingsData.length > 0 && depsData.length > 0) {
+          const latestDisruption = disruptionsData[0];
+          const analysis = computeImpactAnalysis(latestDisruption, bookingsData, depsData);
+          setImpactAnalysis(analysis);
+        } else {
+          setImpactAnalysis(null);
+        }
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        console.error('Failed to load data:', error);
+        toast.error('Failed to load trip data');
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // ── Supabase Realtime subscription ─────────────────────
 
@@ -131,6 +186,8 @@ export default function DashboardPage() {
       if (disruption) {
         // Refresh all data
         await loadData();
+      } else {
+        throw new Error('Failed to create disruption');
       }
     },
     [loadData]
@@ -148,6 +205,7 @@ export default function DashboardPage() {
 
   const handleResetDemo = useCallback(async () => {
     setIsResetting(true);
+    setTargetSelectionScenario(null);
     const success = await resetDemo();
     if (success) {
       setImpactAnalysis(null);
@@ -167,6 +225,38 @@ export default function DashboardPage() {
   const handleSelectBooking = useCallback((booking: Booking) => {
     setSelectedBooking(booking);
   }, []);
+
+  const handleStartTargetSelection = useCallback((scenario: ScenarioConfig) => {
+    setSelectedBooking(null);
+    setTargetSelectionScenario(scenario);
+  }, []);
+
+  const handleCancelTargetSelection = useCallback(() => {
+    setTargetSelectionScenario(null);
+  }, []);
+
+  const handleConfirmTarget = useCallback(
+    async (booking: Booking) => {
+      if (!targetSelectionScenario) return;
+      const scenarioToTrigger = targetSelectionScenario;
+      setTargetSelectionScenario(null);
+      setSelectedBooking(booking);
+      try {
+        await handleTriggerDisruption(
+          booking.id,
+          scenarioToTrigger.type,
+          scenarioToTrigger.severity,
+          scenarioToTrigger.getDescription(booking)
+        );
+        toast.success(`${scenarioToTrigger.label} simulated`, {
+          description: `Affected booking: ${booking.title}`,
+        });
+      } catch {
+        toast.error('Failed to trigger disruption');
+      }
+    },
+    [targetSelectionScenario, handleTriggerDisruption]
+  );
 
   // ── Active disruption options ──────────────────────────
 
@@ -250,6 +340,9 @@ export default function DashboardPage() {
               dependencies={dependencies}
               selectedBookingId={selectedBooking?.id || null}
               onSelectBooking={handleSelectBooking}
+              selectableBookingIds={selectableBookingIds}
+              isTargetSelectionActive={Boolean(targetSelectionScenario)}
+              onConfirmTarget={handleConfirmTarget}
             />
           </div>
 
@@ -269,32 +362,25 @@ export default function DashboardPage() {
 
         {/* Right Sidebar */}
         <div className="w-[340px] flex-shrink-0 border-l border-border/50 bg-card/30 overflow-y-auto p-4 space-y-4 hidden lg:block">
-          {/* Booking Detail or Simulator */}
-          {selectedBooking ? (
+          {/* Booking Detail Panel (when node selected) */}
+          {selectedBooking && (
             <BookingDetailPanel
               booking={selectedBooking}
               onClose={() => setSelectedBooking(null)}
             />
-          ) : (
-            <DisruptionSimulator
-              bookings={bookings}
-              selectedBooking={selectedBooking}
-              onClearSelection={() => setSelectedBooking(null)}
-              onTrigger={handleTriggerDisruption}
-              isLoading={isLoading}
-            />
           )}
 
-          {/* Always show simulator if detail panel is open */}
-          {selectedBooking && (
-            <DisruptionSimulator
-              bookings={bookings}
-              selectedBooking={selectedBooking}
-              onClearSelection={() => setSelectedBooking(null)}
-              onTrigger={handleTriggerDisruption}
-              isLoading={isLoading}
-            />
-          )}
+          {/* Disruption Simulator */}
+          <DisruptionSimulator
+            bookings={bookings}
+            selectedBooking={selectedBooking}
+            onClearSelection={() => setSelectedBooking(null)}
+            onTrigger={handleTriggerDisruption}
+            isLoading={isLoading}
+            targetSelectionScenario={targetSelectionScenario}
+            onStartTargetSelection={handleStartTargetSelection}
+            onCancelTargetSelection={handleCancelTargetSelection}
+          />
         </div>
       </div>
     </div>

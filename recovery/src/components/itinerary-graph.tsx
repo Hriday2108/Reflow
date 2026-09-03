@@ -38,6 +38,9 @@ interface ItineraryGraphProps {
   dependencies: BookingDependency[];
   selectedBookingId: string | null;
   onSelectBooking: (booking: Booking) => void;
+  selectableBookingIds?: string[];
+  isTargetSelectionActive?: boolean;
+  onConfirmTarget?: (booking: Booking) => void;
 }
 
 // ── Component ────────────────────────────────────────────
@@ -47,28 +50,44 @@ export default function ItineraryGraph({
   dependencies,
   selectedBookingId,
   onSelectBooking,
+  selectableBookingIds = [],
+  isTargetSelectionActive = false,
+  onConfirmTarget,
 }: ItineraryGraphProps) {
   const handleSelect = useCallback(
     (booking: Booking) => {
+      if (isTargetSelectionActive) {
+        if (selectableBookingIds.includes(booking.id)) {
+          onConfirmTarget?.(booking);
+        }
+        return;
+      }
       onSelectBooking(booking);
     },
-    [onSelectBooking]
+    [isTargetSelectionActive, selectableBookingIds, onConfirmTarget, onSelectBooking]
   );
 
   // Convert bookings to React Flow nodes
   const nodes: Node[] = useMemo(() => {
-    return bookings.map((booking) => ({
-      id: booking.id,
-      type: 'booking',
-      position: booking.position || { x: 0, y: 0 },
-      data: {
-        booking,
-        isSelected: booking.id === selectedBookingId,
-        onSelect: handleSelect,
-      },
-      draggable: true,
-    }));
-  }, [bookings, selectedBookingId, handleSelect]);
+    return bookings.map((booking) => {
+      const isSelectableTarget = Boolean(
+        isTargetSelectionActive && selectableBookingIds.includes(booking.id)
+      );
+      return {
+        id: booking.id,
+        type: 'booking',
+        position: booking.position || { x: 0, y: 0 },
+        data: {
+          booking,
+          isSelected: !isTargetSelectionActive && booking.id === selectedBookingId,
+          onSelect: handleSelect,
+          isSelectableTarget,
+          isTargetSelectionActive,
+        },
+        draggable: !isTargetSelectionActive,
+      };
+    });
+  }, [bookings, selectedBookingId, handleSelect, isTargetSelectionActive, selectableBookingIds]);
 
   // Convert dependencies to React Flow edges
   const edges: Edge[] = useMemo(() => {
@@ -90,11 +109,11 @@ export default function ItineraryGraph({
         source: dep.from_booking_id,
         target: dep.to_booking_id,
         type: 'smoothstep',
-        animated: edgeStatus === 'disrupted' || edgeStatus === 'at-risk',
+        animated: !isTargetSelectionActive && (edgeStatus === 'disrupted' || edgeStatus === 'at-risk'),
         style: {
           stroke: edgeStatusColor[edgeStatus],
           strokeWidth: 2.5,
-          opacity: edgeStatus === 'cancelled' ? 0.3 : 0.7,
+          opacity: isTargetSelectionActive ? 0.15 : edgeStatus === 'cancelled' ? 0.3 : 0.7,
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -104,7 +123,7 @@ export default function ItineraryGraph({
         },
       };
     });
-  }, [dependencies, bookings]);
+  }, [dependencies, bookings, isTargetSelectionActive]);
 
   return (
     <div className="w-full h-full rounded-xl overflow-hidden border border-border/50 bg-card/30">

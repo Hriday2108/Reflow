@@ -7,12 +7,10 @@ import {
   BookingType,
   BookingDependency,
   DisruptionType,
-  Severity,
   ImpactItem,
   ImpactAnalysis,
   DisruptionEvent,
   RecoveryOption,
-  BookingChange,
   RiskWarning,
 } from '@/types';
 

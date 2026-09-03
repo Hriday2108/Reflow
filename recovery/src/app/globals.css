@@ -196,6 +196,23 @@
   animation: amber-pulse 2s ease-out infinite;
 }
 
+/* Selectable target pulse — distinct blue variant matching the amber/red visual ripple style */
+@keyframes target-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.animate-target-pulse {
+  animation: target-pulse 1.4s ease-out infinite;
+}
+
 /* Hide Next.js dev tools indicator (N badge) */
 nextjs-portal,
 [data-nextjs-toast-wrapper],

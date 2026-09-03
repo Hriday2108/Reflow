@@ -82,12 +82,20 @@ type BookingNodeData = {
   booking: Booking;
   isSelected: boolean;
   onSelect: (booking: Booking) => void;
+  isSelectableTarget?: boolean;
+  isTargetSelectionActive?: boolean;
 };
 
 // ── Component ────────────────────────────────────────────
 
 function BookingNodeComponent({ data }: NodeProps) {
-  const { booking, isSelected, onSelect } = data as unknown as BookingNodeData;
+  const {
+    booking,
+    isSelected,
+    onSelect,
+    isSelectableTarget = false,
+    isTargetSelectionActive = false,
+  } = data as unknown as BookingNodeData;
   const Icon = iconMap[booking.type] || CalendarDays;
   const style = statusStyles[booking.status];
   const time = new Date(booking.start_time).toLocaleTimeString('en-US', {
@@ -100,6 +108,15 @@ function BookingNodeComponent({ data }: NodeProps) {
     day: 'numeric',
   });
 
+  // Calculate dynamic classes based on selection mode
+  const nodeStateClass = isTargetSelectionActive
+    ? isSelectableTarget
+      ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/70 dark:ring-blue-400/70 ring-offset-2 ring-offset-background scale-[1.04] animate-target-pulse z-20 shadow-lg cursor-pointer hover:scale-[1.06]'
+      : 'opacity-35 grayscale-[30%] pointer-events-none transition-all duration-300'
+    : `${style.border} ${style.bg} ${style.glow} ${
+        isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-105' : ''
+      } hover:scale-[1.03] hover:shadow-lg cursor-pointer`;
+
   return (
     <>
       <Handle type="target" position={Position.Left} className="!bg-border !w-2 !h-2" />
@@ -109,14 +126,20 @@ function BookingNodeComponent({ data }: NodeProps) {
         transition={{ duration: 0.3 }}
         onClick={() => onSelect(booking)}
         className={`
-          relative w-[220px] rounded-xl border-2 p-3.5 cursor-pointer
+          relative w-[220px] rounded-xl border-2 p-3.5
           transition-all duration-300 select-none
-          ${style.border} ${style.bg} ${style.glow}
-          ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-105' : ''}
-          hover:scale-[1.03] hover:shadow-lg
-          bg-card/80 backdrop-blur-sm
+          ${nodeStateClass}
+          bg-card/90 backdrop-blur-sm
         `}
       >
+        {/* Select Target Indicator Badge */}
+        {isSelectableTarget && (
+          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[9px] font-semibold tracking-wide uppercase rounded-full bg-blue-600 text-white shadow-md flex items-center gap-1 z-30 pointer-events-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+            Target
+          </div>
+        )}
+
         {/* Header row */}
         <div className="flex items-start gap-2.5 mb-2">
           <div
