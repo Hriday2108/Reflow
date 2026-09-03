@@ -1,0 +1,292 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Recovery custom colors */
+  --color-confirmed: #10b981;
+  --color-at-risk: #f59e0b;
+  --color-disrupted: #ef4444;
+  --color-rebooked: #3b82f6;
+  --color-cancelled: #6b7280;
+  --color-indigo: #6366f1;
+  --color-indigo-light: #818cf8;
+}
+
+:root {
+  --background: oklch(0.985 0.002 247);
+  --foreground: oklch(0.145 0.005 247);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0.005 247);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0.005 247);
+  --primary: oklch(0.488 0.243 264);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.96 0.01 264);
+  --secondary-foreground: oklch(0.3 0.1 264);
+  --muted: oklch(0.96 0.005 264);
+  --muted-foreground: oklch(0.5 0.02 264);
+  --accent: oklch(0.95 0.02 264);
+  --accent-foreground: oklch(0.3 0.1 264);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.91 0.01 264);
+  --input: oklch(0.91 0.01 264);
+  --ring: oklch(0.488 0.243 264);
+  --chart-1: oklch(0.488 0.243 264);
+  --chart-2: oklch(0.637 0.237 145);
+  --chart-3: oklch(0.795 0.184 86);
+  --chart-4: oklch(0.577 0.245 27);
+  --chart-5: oklch(0.5 0.15 264);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.97 0.01 264);
+  --sidebar-foreground: oklch(0.145 0.005 247);
+  --sidebar-primary: oklch(0.488 0.243 264);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.95 0.02 264);
+  --sidebar-accent-foreground: oklch(0.3 0.1 264);
+  --sidebar-border: oklch(0.91 0.01 264);
+  --sidebar-ring: oklch(0.488 0.243 264);
+}
+
+.dark {
+  --background: oklch(0.12 0.01 264);
+  --foreground: oklch(0.96 0.005 264);
+  --card: oklch(0.17 0.015 264);
+  --card-foreground: oklch(0.96 0.005 264);
+  --popover: oklch(0.17 0.015 264);
+  --popover-foreground: oklch(0.96 0.005 264);
+  --primary: oklch(0.637 0.237 264);
+  --primary-foreground: oklch(0.12 0.01 264);
+  --secondary: oklch(0.22 0.02 264);
+  --secondary-foreground: oklch(0.96 0.005 264);
+  --muted: oklch(0.22 0.02 264);
+  --muted-foreground: oklch(0.65 0.03 264);
+  --accent: oklch(0.22 0.02 264);
+  --accent-foreground: oklch(0.96 0.005 264);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.637 0.237 264);
+  --chart-1: oklch(0.637 0.237 264);
+  --chart-2: oklch(0.637 0.237 145);
+  --chart-3: oklch(0.795 0.184 86);
+  --chart-4: oklch(0.704 0.191 22);
+  --chart-5: oklch(0.5 0.15 264);
+  --sidebar: oklch(0.17 0.015 264);
+  --sidebar-foreground: oklch(0.96 0.005 264);
+  --sidebar-primary: oklch(0.637 0.237 264);
+  --sidebar-primary-foreground: oklch(0.12 0.01 264);
+  --sidebar-accent: oklch(0.22 0.02 264);
+  --sidebar-accent-foreground: oklch(0.96 0.005 264);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.637 0.237 264);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+}
+
+/* React Flow overrides */
+.react-flow__node {
+  cursor: pointer !important;
+}
+
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0.02 264);
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.02 264);
+}
+
+/* Ripple animation for disrupted nodes */
+@keyframes ripple-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-ripple {
+  animation: ripple-pulse 1.5s ease-out infinite;
+}
+
+/* Amber ripple for at-risk */
+@keyframes amber-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+.animate-amber-pulse {
+  animation: amber-pulse 2s ease-out infinite;
+}
+
+/* Hide Next.js dev tools indicator (N badge) */
+nextjs-portal,
+[data-nextjs-toast-wrapper],
+div[data-next-badge],
+button[aria-label*="Next.js"] {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Reflow Glass Text Loader (strictly scoped to loader)
+   ═══════════════════════════════════════════════════════════ */
+.reflow-loader-scene {
+  perspective: 900px;
+  position: relative;
+  z-index: 2;
+}
+
+.reflow-loader-stage {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: reflow-loader-tilt 6s ease-in-out infinite;
+}
+
+@keyframes reflow-loader-tilt {
+  0%, 100% {
+    transform: rotateX(8deg) rotateY(-6deg);
+  }
+  50% {
+    transform: rotateX(10deg) rotateY(6deg);
+  }
+}
+
+.reflow-loader-base,
+.reflow-loader-shine {
+  margin: 0;
+  font-family: var(--font-baloo), 'Baloo 2', 'Fredoka', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(32px, 6vw, 64px);
+  letter-spacing: 4px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* frosted glass letters: translucent fill + blur/saturate of whatever sits behind them */
+.reflow-loader-base {
+  color: transparent;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(191, 233, 255, 0.25) 45%,
+    rgba(0, 170, 255, 0.18) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  /* soft layered glow instead of hard extrusion, to keep the glass look light */
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 14px rgba(0, 170, 255, 0.25),
+    0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* moving shine, clipped to the same glyph shapes */
+.reflow-loader-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.95) 50%,
+    transparent 60%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  mix-blend-mode: screen;
+  animation: reflow-loader-sweep 2s linear infinite;
+}
+
+@keyframes reflow-loader-sweep {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
