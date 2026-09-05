@@ -55,6 +55,10 @@
   --color-cancelled: #6b7280;
   --color-indigo: #6366f1;
   --color-indigo-light: #818cf8;
+  --color-electric: #2563eb;
+  --color-electric-light: #60a5fa;
+  --color-purple: #7c3aed;
+  --color-purple-light: #a78bfa;
 }
 
 :root {
@@ -92,159 +96,358 @@
   --sidebar-ring: oklch(0.488 0.243 264);
 }
 
+/* ══════════════════════════════════════════════════════════
+   DEEP DARK THEME — Reference image accurate (navy/midnight)
+   ══════════════════════════════════════════════════════════ */
 .dark {
-  --background: oklch(0.12 0.01 264);
-  --foreground: oklch(0.96 0.005 264);
-  --card: oklch(0.17 0.015 264);
-  --card-foreground: oklch(0.96 0.005 264);
-  --popover: oklch(0.17 0.015 264);
-  --popover-foreground: oklch(0.96 0.005 264);
-  --primary: oklch(0.637 0.237 264);
-  --primary-foreground: oklch(0.12 0.01 264);
-  --secondary: oklch(0.22 0.02 264);
-  --secondary-foreground: oklch(0.96 0.005 264);
-  --muted: oklch(0.22 0.02 264);
-  --muted-foreground: oklch(0.65 0.03 264);
-  --accent: oklch(0.22 0.02 264);
-  --accent-foreground: oklch(0.96 0.005 264);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.637 0.237 264);
-  --chart-1: oklch(0.637 0.237 264);
+  /* Main background — very deep navy, matching reference's #0d0f1a feel */
+  --background: oklch(0.065 0.018 264);
+  --foreground: oklch(0.93 0.008 264);
+
+  /* Cards — slightly lighter than bg, dense glass look */
+  --card: oklch(0.10 0.020 264);
+  --card-foreground: oklch(0.93 0.008 264);
+  --popover: oklch(0.12 0.022 264);
+  --popover-foreground: oklch(0.93 0.008 264);
+
+  /* Primary — vibrant blue matching reference CTA buttons */
+  --primary: oklch(0.62 0.24 264);
+  --primary-foreground: oklch(0.065 0.018 264);
+
+  /* Secondary/muted — subtle layered panels */
+  --secondary: oklch(0.14 0.022 264);
+  --secondary-foreground: oklch(0.93 0.008 264);
+  --muted: oklch(0.14 0.022 264);
+  --muted-foreground: oklch(0.52 0.022 264);
+
+  /* Accent — slightly brighter than cards for hover states */
+  --accent: oklch(0.17 0.026 264);
+  --accent-foreground: oklch(0.93 0.008 264);
+
+  /* Destructive */
+  --destructive: oklch(0.65 0.22 22);
+
+  /* Borders — very subtle white tint, reference style */
+  --border: oklch(1 0 0 / 7%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.62 0.24 264);
+
+  /* Charts */
+  --chart-1: oklch(0.62 0.24 264);
   --chart-2: oklch(0.637 0.237 145);
   --chart-3: oklch(0.795 0.184 86);
   --chart-4: oklch(0.704 0.191 22);
   --chart-5: oklch(0.5 0.15 264);
-  --sidebar: oklch(0.17 0.015 264);
-  --sidebar-foreground: oklch(0.96 0.005 264);
-  --sidebar-primary: oklch(0.637 0.237 264);
-  --sidebar-primary-foreground: oklch(0.12 0.01 264);
-  --sidebar-accent: oklch(0.22 0.02 264);
-  --sidebar-accent-foreground: oklch(0.96 0.005 264);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.637 0.237 264);
+
+  /* Sidebar — slightly darker than main content, reference left panel */
+  --sidebar: oklch(0.08 0.018 264);
+  --sidebar-foreground: oklch(0.93 0.008 264);
+  --sidebar-primary: oklch(0.62 0.24 264);
+  --sidebar-primary-foreground: oklch(0.065 0.018 264);
+  --sidebar-accent: oklch(0.14 0.022 264);
+  --sidebar-accent-foreground: oklch(0.93 0.008 264);
+  --sidebar-border: oklch(1 0 0 / 6%);
+  --sidebar-ring: oklch(0.62 0.24 264);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans scroll-smooth;
-  }
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+  html { @apply font-sans scroll-smooth; }
 }
 
 /* React Flow overrides */
-.react-flow__node {
-  cursor: pointer !important;
-}
-
-.react-flow__attribution {
-  display: none !important;
+.react-flow__node { cursor: pointer !important; }
+.react-flow__attribution { display: none !important; }
+.react-flow__background { opacity: 0.2; }
+.react-flow__edge-path {
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.4));
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: oklch(0.7 0.02 264);
-  border-radius: 3px;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: oklch(0.35 0.02 264);
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: oklch(0.3 0.02 264); border-radius: 2px; }
+.dark ::-webkit-scrollbar-thumb { background: oklch(0.20 0.02 264); }
 
-/* Ripple animation for disrupted nodes */
+/* Status pulse animations */
 @keyframes ripple-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
+  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  70%  { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+.animate-ripple { animation: ripple-pulse 1.5s ease-out infinite; }
 
-.animate-ripple {
-  animation: ripple-pulse 1.5s ease-out infinite;
-}
-
-/* Amber ripple for at-risk */
 @keyframes amber-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-  }
+  0%   { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  70%  { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
 }
+.animate-amber-pulse { animation: amber-pulse 2s ease-out infinite; }
 
-.animate-amber-pulse {
-  animation: amber-pulse 2s ease-out infinite;
-}
-
-/* Selectable target pulse — distinct blue variant matching the amber/red visual ripple style */
 @keyframes target-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 12px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
+  0%   { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+  70%  { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+.animate-target-pulse { animation: target-pulse 1.4s ease-out infinite; }
+
+/* ══════════════════════════════════════════════════════════
+   GLASSMORPHISM — Reference style: very subtle frosted glass
+   ══════════════════════════════════════════════════════════ */
+.glass {
+  background: rgba(255,255,255,0.025);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.glass-card {
+  background: rgba(255,255,255,0.035);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
-.animate-target-pulse {
-  animation: target-pulse 1.4s ease-out infinite;
+/* Reference-style elevated card (for stat cards, plan cards) */
+.ref-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ref-card:hover {
+  border-color: rgba(255,255,255,0.14);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
 }
 
-/* Hide Next.js dev tools indicator (N badge) */
-nextjs-portal,
-[data-nextjs-toast-wrapper],
-div[data-next-badge],
-button[aria-label*="Next.js"] {
-  display: none !important;
+/* ══════════════════════════════════════════════════════════
+   GLOW UTILITIES
+   ══════════════════════════════════════════════════════════ */
+.glow-blue   { box-shadow: 0 0 20px rgba(37, 99, 235, 0.35), 0 0 40px rgba(37, 99, 235, 0.15); }
+.glow-green  { box-shadow: 0 0 20px rgba(16, 185, 129, 0.35), 0 0 40px rgba(16, 185, 129, 0.15); }
+.glow-red    { box-shadow: 0 0 20px rgba(239, 68, 68, 0.35), 0 0 40px rgba(239, 68, 68, 0.15); }
+.glow-amber  { box-shadow: 0 0 20px rgba(245, 158, 11, 0.35), 0 0 40px rgba(245, 158, 11, 0.15); }
+.glow-purple { box-shadow: 0 0 20px rgba(124, 58, 237, 0.35), 0 0 40px rgba(124, 58, 237, 0.15); }
+
+/* ══════════════════════════════════════════════════════════
+   GRADIENT TEXT
+   ══════════════════════════════════════════════════════════ */
+.gradient-text-blue {
+  background: linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #c7d8ff 40%, #818cf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Reflow Glass Text Loader (strictly scoped to loader)
-   ═══════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   REFERENCE UI STAT BADGE — colored top stripe cards
+   ══════════════════════════════════════════════════════════ */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 12px 12px 0 0;
+}
+.stat-card-blue::before   { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+.stat-card-amber::before  { background: linear-gradient(90deg, #f59e0b, #fb923c); }
+.stat-card-red::before    { background: linear-gradient(90deg, #ef4444, #f97316); }
+.stat-card-green::before  { background: linear-gradient(90deg, #10b981, #34d399); }
+
+/* ══════════════════════════════════════════════════════════
+   SIDEBAR ACTIVE ITEM — reference blue left indicator
+   ══════════════════════════════════════════════════════════ */
+.sidebar-item-active {
+  background: rgba(96, 165, 250, 0.12);
+  border-left: 2px solid #60a5fa;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PLAN CARD — reference recovery plan cards style
+   ══════════════════════════════════════════════════════════ */
+.plan-card-recommended {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.plan-card-recommended:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.12);
+}
+
+/* ══════════════════════════════════════════════════════════
+   RISK RING ANIMATION
+   ══════════════════════════════════════════════════════════ */
+@keyframes risk-fill {
+  from { stroke-dashoffset: 200; }
+  to   { stroke-dashoffset: var(--ring-offset, 0); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   HERO SECTION — Reference-style large background orbs
+   ══════════════════════════════════════════════════════════ */
+.hero-orb-1 {
+  position: absolute;
+  top: -100px; left: -200px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-orb-2 {
+  position: absolute;
+  top: 100px; right: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-orb-3 {
+  position: absolute;
+  bottom: -100px; left: 50%;
+  transform: translateX(-50%);
+  width: 1000px; height: 400px;
+  background: radial-gradient(ellipse, rgba(99,102,241,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOP NAV SEARCH — Reference search bar style
+   ══════════════════════════════════════════════════════════ */
+.nav-search {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  width: 200px;
+}
+.nav-search:focus {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(99,102,241,0.5);
+  color: rgba(255,255,255,0.8);
+}
+.nav-search::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+
+/* ══════════════════════════════════════════════════════════
+   AVATAR — Reference user avatar style
+   ══════════════════════════════════════════════════════════ */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PROGRESS BAR — Reference horizontal risk bars
+   ══════════════════════════════════════════════════════════ */
+.risk-bar-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.risk-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 1s ease-out;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ALERT ITEM — Reference severity left stripe
+   ══════════════════════════════════════════════════════════ */
+.alert-stripe {
+  position: relative;
+  padding-left: 12px;
+}
+.alert-stripe::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+.alert-stripe-red::before   { background: #ef4444; }
+.alert-stripe-amber::before { background: #f59e0b; }
+.alert-stripe-green::before { background: #10b981; }
+.alert-stripe-blue::before  { background: #3b82f6; }
+
+/* ══════════════════════════════════════════════════════════
+   TAB PILLS — Reference tab style
+   ══════════════════════════════════════════════════════════ */
+.tab-pill {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab-pill-active {
+  background: rgba(99,102,241,0.2);
+  color: #818cf8;
+  border: 1px solid rgba(99,102,241,0.35);
+}
+.tab-pill-inactive {
+  background: transparent;
+  color: rgba(255,255,255,0.45);
+  border: 1px solid transparent;
+}
+.tab-pill-inactive:hover {
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.04);
+}
+
+/* ══════════════════════════════════════════════════════════
+   REFLOW GLASS TEXT LOADER
+   ══════════════════════════════════════════════════════════ */
 .reflow-loader-scene {
   perspective: 900px;
   position: relative;
   z-index: 2;
 }
-
 .reflow-loader-stage {
   position: relative;
   transform-style: preserve-3d;
   animation: reflow-loader-tilt 6s ease-in-out infinite;
 }
-
 @keyframes reflow-loader-tilt {
-  0%, 100% {
-    transform: rotateX(8deg) rotateY(-6deg);
-  }
-  50% {
-    transform: rotateX(10deg) rotateY(6deg);
-  }
+  0%, 100% { transform: rotateX(8deg) rotateY(-6deg); }
+  50% { transform: rotateX(10deg) rotateY(6deg); }
 }
-
 .reflow-loader-base,
 .reflow-loader-shine {
   margin: 0;
@@ -256,40 +459,20 @@ button[aria-label*="Next.js"] {
   white-space: nowrap;
   user-select: none;
 }
-
-/* frosted glass letters: translucent fill + blur/saturate of whatever sits behind them */
 .reflow-loader-base {
   color: transparent;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.55) 0%,
-    rgba(191, 233, 255, 0.25) 45%,
-    rgba(0, 170, 255, 0.18) 100%
-  );
+  background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(191,233,255,0.25) 45%, rgba(0,170,255,0.18) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.55);
+  -webkit-text-stroke: 1.5px rgba(255,255,255,0.55);
   backdrop-filter: blur(10px) saturate(180%);
   -webkit-backdrop-filter: blur(10px) saturate(180%);
-  /* soft layered glow instead of hard extrusion, to keep the glass look light */
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35),
-    0 6px 14px rgba(0, 170, 255, 0.25),
-    0 14px 30px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35), 0 6px 14px rgba(0,170,255,0.25), 0 14px 30px rgba(0,0,0,0.35);
 }
-
-/* moving shine, clipped to the same glyph shapes */
 .reflow-loader-shine {
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.95) 50%,
-    transparent 60%
-  );
+  position: absolute; top: 0; left: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.95) 50%, transparent 60%);
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -298,12 +481,15 @@ button[aria-label*="Next.js"] {
   mix-blend-mode: screen;
   animation: reflow-loader-sweep 2s linear infinite;
 }
-
 @keyframes reflow-loader-sweep {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
+  0%   { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Hide Next.js dev badge */
+nextjs-portal,
+[data-nextjs-toast-wrapper],
+div[data-next-badge],
+button[aria-label*="Next.js"] {
+  display: none !important;
 }
