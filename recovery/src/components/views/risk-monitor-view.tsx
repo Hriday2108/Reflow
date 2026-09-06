@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, ArrowRight, Eye, X, AlertTriangle, Info, Map } from 'lucide-react';
 import type { Booking, BookingDependency, RiskWarning } from '@/types';
+import { formatCurrency } from '@/lib/utils';
 import { computeRiskWarnings } from '@/lib/disruption-engine';
 
 interface RiskMonitorViewProps {
@@ -258,10 +259,10 @@ export default function RiskMonitorView({ bookings, dependencies, onNavigate }: 
                   <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col justify-center">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Financial Exposure</p>
                     <p className="text-2xl font-bold text-disrupted">
-                      ${selectedRisk.bookingIds.reduce((sum, id) => {
+                      {formatCurrency(selectedRisk.bookingIds.reduce((sum, id) => {
                         const b = bookings.find(bk => bk.id === id);
                         return sum + (b ? b.cost : 0);
-                      }, 0).toLocaleString()}
+                      }, 0))}
                     </p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">total value at risk</p>
                   </div>
@@ -344,7 +345,7 @@ export default function RiskMonitorView({ bookings, dependencies, onNavigate }: 
                             </div>
                             <div>
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cost</p>
-                              <p className="text-xs font-medium mt-0.5">${b.cost.toLocaleString()}</p>
+                              <p className="text-xs font-medium mt-0.5">{formatCurrency(b.cost)}</p>
                             </div>
                             <div>
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Refund</p>
@@ -381,11 +382,11 @@ export default function RiskMonitorView({ bookings, dependencies, onNavigate }: 
                       const assessments = [];
                       if (fromB && toB) {
                         const totalCostAtRisk = (fromB?.cost || 0) + (toB?.cost || 0);
-                        assessments.push(`If ${fromB.title} is delayed, you risk missing ${toB.title}. The combined value of these bookings is $${totalCostAtRisk.toLocaleString()}.`);
+                        assessments.push(`If ${fromB.title} is delayed, you risk missing ${toB.title}. The combined value of these bookings is ${formatCurrency(totalCostAtRisk)}.`);
                         if (toB.refund_percent === 0) {
-                          assessments.push(`⚠ ${toB.title} is non-refundable. If missed due to a connection delay, the full $${toB.cost.toLocaleString()} would be lost with no possibility of reimbursement from the provider.`);
+                          assessments.push(`⚠ ${toB.title} is non-refundable. If missed due to a connection delay, the full ${formatCurrency(toB.cost)} would be lost with no possibility of reimbursement from the provider.`);
                         } else if (toB.refund_percent < 50) {
-                          assessments.push(`${toB.title} has only a ${toB.refund_percent}% refund rate. You would only recover $${Math.round(toB.cost * toB.refund_percent / 100)} of the $${toB.cost.toLocaleString()} if cancelled.`);
+                          assessments.push(`${toB.title} has only a ${toB.refund_percent}% refund rate. You would only recover ${formatCurrency(toB.cost * toB.refund_percent / 100)} of the ${formatCurrency(toB.cost)} if cancelled.`);
                         }
                         if (fromB.type === 'flight') {
                           assessments.push('Flight delays are common, especially during peak travel seasons. Airlines typically do not compensate for missed third-party connections.');
@@ -401,13 +402,14 @@ export default function RiskMonitorView({ bookings, dependencies, onNavigate }: 
                     {selectedRisk.type === 'non-refundable' && (() => {
                       const b = bookings.find(bk => bk.id === selectedRisk.bookingIds[0]);
                       if (!b) return null;
-                      return [
-                        `${b.title} has a strict non-refundable policy. If this booking is disrupted or missed due to upstream delays, the full $${b.cost.toLocaleString()} would be a total loss.`,
+                      const assessments = [
+                        `${b.title} has a strict non-refundable policy. If this booking is disrupted or missed due to upstream delays, the full ${formatCurrency(b.cost)} would be a total loss.`,
                         b.cost > 500
-                          ? `Given the significant value ($${b.cost.toLocaleString()}), travel insurance covering trip interruption is strongly recommended. Many policies cover non-refundable bookings for a fraction of the cost.`
+                          ? `Given the significant value (${formatCurrency(b.cost)}), travel insurance covering trip interruption is strongly recommended. Many policies cover non-refundable bookings for a fraction of the cost.`
                           : `While the amount is moderate, purchasing travel insurance could protect against unexpected disruptions.`,
                         'Check if your credit card offers any built-in trip protection benefits that may apply to this booking.',
-                      ].map((text, i) => (
+                      ];
+                      return assessments.map((text, i) => (
                         <p key={i} className={`text-xs ${RISK_COLORS[selectedRisk.severity].text} opacity-80 leading-relaxed`}>{text}</p>
                       ));
                     })()}

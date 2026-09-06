@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { SlidersHorizontal, Check, Save, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePreferences, type Priority } from '@/context/preferences-context';
+import { formatCurrency } from '@/lib/utils';
 
 export default function PreferencesView() {
   const { preferences, updatePreferences, resetPreferences } = usePreferences();
@@ -49,7 +50,7 @@ export default function PreferencesView() {
           <div className="w-2 h-2 rounded-full bg-confirmed animate-pulse" />
           <p className="text-xs text-confirmed font-medium">
             Preferences are live — recovery plans are actively sorted by <span className="font-bold capitalize">{priority.replace(/-/g, ' ')}</span> with
-            a ${maxCost.toLocaleString()} budget cap.
+            a {formatCurrency(maxCost)} budget cap.
           </p>
         </motion.div>
 
@@ -92,7 +93,7 @@ export default function PreferencesView() {
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm font-semibold">Maximum Additional Cost</p>
             <span className="text-lg font-bold gradient-text-blue">
-              ${maxCost.toLocaleString()}
+              {formatCurrency(maxCost)}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mb-4">Plans exceeding this budget will be flagged with a warning badge.</p>
@@ -106,8 +107,8 @@ export default function PreferencesView() {
             className="w-full h-2 rounded-full accent-primary cursor-pointer"
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>$0</span>
-            <span>$50,000</span>
+            <span>{formatCurrency(0)}</span>
+            <span>{formatCurrency(50000)}</span>
           </div>
         </motion.div>
 

@@ -88,12 +88,12 @@ export default function AppSidebar({
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{
-            background: 'rgba(99,102,241,0.2)',
-            border: '1px solid rgba(99,102,241,0.35)',
-            boxShadow: '0 0 16px rgba(99,102,241,0.25)',
+            background: 'rgba(181, 101, 29, 0.12)',
+            border: '1px solid rgba(181, 101, 29, 0.25)',
+            boxShadow: '0 0 16px rgba(181, 101, 29, 0.15)',
           }}
         >
-          <Plane className="w-4 h-4" style={{ color: '#818cf8' }} />
+          <Plane className="w-4 h-4" style={{ color: '#8b3e17' }} />
         </div>
         <AnimatePresence>
           {!collapsed && (
@@ -122,19 +122,19 @@ export default function AppSidebar({
               className={cn(
                 'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200 group relative text-left',
                 isActive
-                  ? 'text-white'
+                  ? 'text-primary font-bold'
                   : 'text-muted-foreground hover:text-foreground'
               )}
               style={isActive ? {
-                background: 'rgba(99,102,241,0.15)',
-                borderLeft: '2px solid #818cf8',
+                background: 'rgba(181, 101, 29, 0.15)',
+                borderLeft: '3px solid #b5651d',
                 paddingLeft: '9px',
               } : undefined}
             >
               <div className="relative flex-shrink-0">
                 <Icon
                   className="w-[18px] h-[18px]"
-                  style={isActive ? { color: '#818cf8' } : undefined}
+                  style={isActive ? { color: '#b5651d' } : undefined}
                 />
                 {item.badge !== undefined && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-disrupted text-white text-[9px] font-bold rounded-full flex items-center justify-center">
@@ -150,7 +150,7 @@ export default function AppSidebar({
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
                     className="text-sm font-medium whitespace-nowrap"
-                    style={isActive ? { color: '#c7d2fe' } : undefined}
+                    style={isActive ? { color: '#8b3e17' } : undefined}
                   >
                     {item.label}
                   </motion.span>

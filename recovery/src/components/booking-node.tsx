@@ -13,6 +13,7 @@ import {
   Ticket,
   CalendarDays,
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 // ── Icon map ─────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ type BookingNodeData = {
   onSelect: (booking: Booking) => void;
   isSelectableTarget?: boolean;
   isTargetSelectionActive?: boolean;
+  onConfirmTarget?: (booking: Booking) => void;
 };
 
 // ── Component ────────────────────────────────────────────
@@ -95,6 +97,7 @@ function BookingNodeComponent({ data }: NodeProps) {
     onSelect,
     isSelectableTarget = false,
     isTargetSelectionActive = false,
+    onConfirmTarget,
   } = data as unknown as BookingNodeData;
   const Icon = iconMap[booking.type] || CalendarDays;
   const style = statusStyles[booking.status];
@@ -124,9 +127,15 @@ function BookingNodeComponent({ data }: NodeProps) {
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        onClick={() => onSelect(booking)}
+        onClick={() => {
+          if (isTargetSelectionActive) {
+            if (isSelectableTarget && onConfirmTarget) onConfirmTarget(booking);
+          } else {
+            onSelect(booking);
+          }
+        }}
         className={`
-          relative w-[220px] rounded-xl border-2 p-3.5
+          relative w-[260px] rounded-xl border-2 p-4
           transition-all duration-300 select-none
           ${nodeStateClass}
           bg-card/90 backdrop-blur-sm
@@ -143,17 +152,17 @@ function BookingNodeComponent({ data }: NodeProps) {
         {/* Header row */}
         <div className="flex items-start gap-2.5 mb-2">
           <div
-            className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${style.badgeBg}`}
+            className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${style.badgeBg}`}
           >
-            <Icon className={`w-4.5 h-4.5 ${style.badge}`} />
+            <Icon className={`w-5 h-5 ${style.badge}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold leading-tight truncate text-foreground">
+            <p className="text-[14px] font-semibold leading-tight truncate text-foreground">
               {booking.title.length > 28
                 ? booking.title.substring(0, 28) + '…'
                 : booking.title}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-[12px] text-muted-foreground mt-0.5">
               {day} · {time}
             </p>
           </div>
@@ -161,8 +170,8 @@ function BookingNodeComponent({ data }: NodeProps) {
 
         {/* Footer row */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">
-            ${Number(booking.cost).toFixed(0)}
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {formatCurrency(booking.cost)}
           </span>
           <Badge
             variant="secondary"

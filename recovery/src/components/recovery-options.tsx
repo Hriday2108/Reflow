@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import RecoveryChart from './recovery-chart';
-import type { RecoveryOption } from '@/types';
+import type { RecoveryOption, DisruptionEvent } from '@/types';
+import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   Wand2, Clock, DollarSign, Star, CheckCircle2,
@@ -48,11 +49,11 @@ export default function RecoveryOptions({ options, onSelectOption, maxCost }: Re
     
     // Cost analysis
     if (opt.cost_delta > 0) {
-      analysis.push(`This plan requires an additional out-of-pocket cost of $${opt.cost_delta}. Depending on your policy, this may be recoverable through travel insurance or carrier compensation.`);
+      analysis.push(`This plan requires an additional out-of-pocket cost of ${formatCurrency(opt.cost_delta)}. Depending on your policy, this may be recoverable through travel insurance or carrier compensation.`);
     } else if (opt.cost_delta < 0) {
-      analysis.push(`This plan results in a net savings/refund of $${Math.abs(opt.cost_delta)}. The refund will be processed to your original payment method.`);
+      analysis.push(`This plan results in a net savings/refund of ${formatCurrency(Math.abs(opt.cost_delta))}. The refund will be processed to your original payment method.`);
     } else {
-      analysis.push(`This plan is cost-neutral. Any cancellation refunds perfectly offset the new booking costs, resulting in $0 additional out-of-pocket expenses.`);
+      analysis.push(`This plan is cost-neutral. Any cancellation refunds perfectly offset the new booking costs, resulting in ${formatCurrency(0)} additional out-of-pocket expenses.`);
     }
 
     // Time analysis
@@ -178,7 +179,7 @@ export default function RecoveryOptions({ options, onSelectOption, maxCost }: Re
                     <div className="mt-auto space-y-4">
                       <div className="flex items-center justify-between border-t border-border/40 pt-4">
                         <div>
-                          <p className="text-xl font-bold">${opt.cost_delta}</p>
+                          <p className="text-xl font-bold">{formatCurrency(opt.cost_delta)}</p>
                           <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Additional Cost</p>
                         </div>
                         <div className="text-right">
@@ -243,7 +244,7 @@ export default function RecoveryOptions({ options, onSelectOption, maxCost }: Re
                     <td className="p-4 text-muted-foreground font-medium bg-black/20">Additional Cost</td>
                     {options.map((opt, idx) => (
                       <td key={opt.id} className={`p-4 font-bold ${idx === 0 ? 'bg-primary/5' : ''}`}>
-                        ${opt.cost_delta}
+                        {formatCurrency(opt.cost_delta)}
                       </td>
                     ))}
                   </tr>
@@ -333,7 +334,7 @@ export default function RecoveryOptions({ options, onSelectOption, maxCost }: Re
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-3 rounded-xl bg-black/20 border border-white/5">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Additional Cost</p>
-                    <p className="text-lg font-bold">${viewingOption.cost_delta}</p>
+                    <p className="text-lg font-bold">{formatCurrency(viewingOption.cost_delta)}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-black/20 border border-white/5">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Time Impact</p>

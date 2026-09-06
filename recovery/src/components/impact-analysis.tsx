@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ImpactAnalysis, ImpactItem } from '@/types';
+import { formatCurrency } from '@/lib/utils';
 import {
   AlertTriangle, DollarSign, Target, ChevronDown,
   Plane, Train, Car, Hotel, Ticket, AlertCircle,
@@ -56,8 +57,7 @@ export default function ImpactAnalysisPanel({ analyses, onClose }: ImpactAnalysi
         {/* Cost at risk */}
         <div className="text-right flex-shrink-0 mr-2">
           <div className="flex items-center gap-0.5 text-disrupted justify-end">
-            <DollarSign className="w-3.5 h-3.5" />
-            <span className="text-lg font-extrabold leading-none">{totalCostAtRisk.toFixed(0)}</span>
+            <span className="text-lg font-extrabold leading-none">{formatCurrency(totalCostAtRisk)}</span>
           </div>
           <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">total at risk</p>
         </div>
@@ -109,17 +109,17 @@ export default function ImpactAnalysisPanel({ analyses, onClose }: ImpactAnalysi
                 </div>
 
                 {/* Direct impact card */}
-                <div className="rounded-xl border border-disrupted/15 bg-black/40 overflow-hidden">
+                <div className="rounded-xl border border-disrupted/15 bg-card/60 overflow-hidden">
                   <div className="p-3 bg-disrupted/5 border-b border-disrupted/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <DirectIcon className="w-4 h-4 text-disrupted" />
                       <p className="text-sm font-semibold text-foreground leading-tight">{directImpact.booking.title}</p>
                     </div>
                     {directImpact.booking.cost > 0 && (
-                      <p className="text-xs font-medium text-muted-foreground">${directImpact.booking.cost}</p>
+                      <p className="text-xs font-medium text-muted-foreground">{formatCurrency(directImpact.booking.cost)}</p>
                     )}
                   </div>
-                  <div className="p-3 flex items-start gap-2 bg-black/20">
+                  <div className="p-3 flex items-start gap-2 bg-disrupted/5">
                     <AlertCircle className="w-3.5 h-3.5 text-disrupted mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-muted-foreground leading-relaxed">{directImpact.reason}</p>
                   </div>
@@ -151,7 +151,7 @@ export default function ImpactAnalysisPanel({ analyses, onClose }: ImpactAnalysi
                             {downstreamImpacts.map((impact) => {
                               const Icon = BOOKING_ICONS[impact.booking.type] || Target;
                               return (
-                                <div key={impact.booking.id} className="p-3 rounded-xl border border-at-risk/15 bg-black/40 flex items-start gap-3">
+                                <div key={impact.booking.id} className="p-3 rounded-xl border border-at-risk/15 bg-card/60 flex items-start gap-3">
                                   <div className="mt-0.5 w-6 h-6 rounded-lg bg-at-risk/10 flex items-center justify-center flex-shrink-0">
                                     <Icon className="w-3.5 h-3.5 text-at-risk" />
                                   </div>

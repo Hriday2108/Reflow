@@ -7,6 +7,7 @@ import {
   AlertTriangle, TrendingUp, CheckCircle2, ShieldAlert,
   ArrowRight, Clock, DollarSign, Activity, Zap,
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import StatusBadge from '@/components/status-badge';
 import type { Trip, Booking, BookingDependency, DisruptionEvent, RecoveryOption } from '@/types';
 import { computeRiskWarnings } from '@/lib/disruption-engine';
@@ -140,7 +141,7 @@ export default function DashboardOverview({
     {
       label: 'Est. Extra Cost',
       sub: 'Potential',
-      value: extraCost > 0 ? `$${extraCost.toLocaleString()}` : '$0',
+      value: formatCurrency(extraCost),
       icon: DollarSign,
       color: extraCost > 0 ? '#f59e0b' : '#10b981',
       stripe: extraCost > 0 ? 'stat-card-amber' : 'stat-card-green',

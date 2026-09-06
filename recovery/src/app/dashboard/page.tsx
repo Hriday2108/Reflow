@@ -442,7 +442,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Right panel — Disruption Simulator only (no booking detail here) */}
-                <div className="w-[300px] flex-shrink-0 border-l border-border/30 bg-card/30 flex flex-col overflow-hidden hidden lg:flex">
+                <div className="w-[340px] flex-shrink-0 border-l border-border/30 bg-card/30 flex flex-col overflow-hidden hidden lg:flex">
                   <div className="flex-1 min-h-0">
                     <DisruptionSimulator
                       bookings={bookings}

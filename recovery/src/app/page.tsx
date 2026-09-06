@@ -208,23 +208,23 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col text-foreground">
+    <div className="min-h-screen bg-background flex flex-col text-foreground paper-bg">
       {/* ── Navbar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 wandor-nav">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center glow-blue" style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' }}>
-              <Plane className="w-4 h-4" style={{ color: '#818cf8' }} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(181,101,29,0.12)', border: '1px solid rgba(181,101,29,0.25)' }}>
+              <Plane className="w-4 h-4" style={{ color: '#8b3e17' }} />
             </div>
-            <span className="text-lg font-bold tracking-widest gradient-text-blue">REFLOW</span>
+            <span className="text-lg font-bold tracking-widest" style={{ color: '#1a1a2e', fontFamily: 'var(--font-heading), Georgia, serif' }}>reflow</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
-            <a href="#demo" className="hover:text-foreground transition-colors">Demo</a>
+          <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>
+            <a href="#features" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
+            <a href="#how-it-works" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
+            <a href="#demo" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Demo</a>
           </div>
           <Link href="/dashboard">
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all glow-blue" style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)', color: 'white' }}>
+            <button className="btn-wandor-primary text-xs">
               Get Started
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -234,36 +234,42 @@ export default function HomePage() {
 
       {/* ── Hero ── */}
       <section className="relative pt-36 pb-24 px-6 overflow-hidden">
-        {/* Background orbs — reference style */}
-        <div className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-none">
-          <div className="hero-orb-1" />
-          <div className="hero-orb-2" />
-          <div className="hero-orb-3" />
-          {/* Subtle grid overlay */}
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(99,102,241,0.06) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-        </div>
+        {/* Looping video background */}
+        <video
+          className="hero-video-bg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/hero-poster.jpg"
+        >
+          <source src="/hero-background.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-video-overlay" />
+        {/* Subtle dot grid, kept for texture over the video */}
+        <div className="absolute inset-0 z-[1] pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(181,101,29,0.10) 1px, transparent 1px)', backgroundSize: '36px 36px' }} />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8"
-            style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)' }}
+            className="wandor-badge mb-8 mx-auto w-fit"
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-xs font-semibold" style={{ color: '#818cf8' }}>✈ Intelligent Travel Recovery Engine</span>
+            <Sparkles className="w-3.5 h-3.5" style={{ color: '#b5651d' }} />
+            <span>✈ Intelligent Travel Recovery Engine</span>
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] mb-6"
+            className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] mb-6"
+            style={{ color: '#1a1a2e' }}
           >
             When your journey is
             <br />
-            <span className="gradient-text-hero">disrupted,</span>
+            <span className="gradient-text-terra">disrupted,</span>
             <br />
             your plans shouldn&apos;t be.
           </motion.h1>
@@ -272,7 +278,8 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+            style={{ color: 'oklch(0.50 0.025 70)' }}
           >
             Reflow detects disruptions, understands their ripple effects across your entire itinerary,
             and creates the best recovery options for your trip — instantly.
@@ -286,15 +293,14 @@ export default function HomePage() {
           >
             <button 
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center gap-2 px-8 h-13 py-3 rounded-xl text-white font-semibold text-sm transition-all shadow-lg glow-blue"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)', boxShadow: '0 8px 32px rgba(99,102,241,0.35)' }}
+              className="btn-wandor-primary"
             >
               <Zap className="w-4 h-4" />
               Start Recovery
               <ArrowRight className="w-4 h-4" />
             </button>
             <Link href="/dashboard">
-              <button className="flex items-center gap-2 px-8 h-13 py-3 rounded-xl glass border border-border/60 text-foreground font-semibold text-sm hover:bg-accent/50 transition-all">
+              <button className="btn-wandor-secondary">
                 Explore Demo
               </button>
             </Link>
@@ -305,13 +311,14 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex items-center justify-center gap-6 mt-12 text-xs text-muted-foreground"
+            className="flex items-center justify-center gap-6 mt-12 text-xs"
+            style={{ color: 'oklch(0.55 0.025 70)' }}
           >
             {[
-              { color: '#10b981', label: 'Confirmed' },
-              { color: '#f59e0b', label: 'At Risk' },
-              { color: '#ef4444', label: 'Disrupted' },
-              { color: '#3b82f6', label: 'Rebooked' },
+              { color: '#2d6a4f', label: 'Confirmed' },
+              { color: '#c77b21', label: 'At Risk' },
+              { color: '#c0392b', label: 'Disrupted' },
+              { color: '#1a3c5e', label: 'Rebooked' },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
@@ -328,8 +335,8 @@ export default function HomePage() {
           transition={{ duration: 0.7, delay: 0.5 }}
           className="max-w-4xl mx-auto mt-16 relative z-10"
         >
-          <div className="glass-card rounded-2xl p-6">
-            <p className="text-xs text-muted-foreground text-center mb-6 uppercase tracking-widest font-semibold">
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(255,252,245,0.85)', border: '1px solid rgba(181,101,29,0.15)', boxShadow: '0 4px 32px rgba(100,50,10,0.08)' }}>
+            <p className="text-xs text-center mb-6 uppercase tracking-widest font-semibold" style={{ color: '#8b3e17' }}>
               Connected Itinerary — Your Journey
             </p>
             <div className="flex items-center justify-center gap-0">
@@ -388,7 +395,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Features ── */}
-      <section id="features" className="py-24 px-6 border-t border-border/30">
+      <section id="features" className="py-24 px-6" style={{ borderTop: '1px solid rgba(181,101,29,0.15)' }}>
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -396,11 +403,11 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#818cf8' }}>Capabilities</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#b5651d' }}>Capabilities</p>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: '#1a1a2e' }}>
               Everything you need to recover
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
+            <p className="max-w-lg mx-auto" style={{ color: 'oklch(0.50 0.025 70)' }}>
               From disruption detection to seamless itinerary recovery — all in seconds.
             </p>
           </motion.div>
@@ -417,16 +424,16 @@ export default function HomePage() {
                   transition={{ duration: 0.4, delay: idx * 0.08 }}
                   whileHover={{ y: -6, transition: { duration: 0.2 } }}
                   className="ref-card p-6 group cursor-default"
-                  style={{ borderRadius: 16, borderColor: f.color + '25' }}
+                  style={{ borderRadius: 16 }}
                 >
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
-                    style={{ backgroundColor: f.glow, border: `1px solid ${f.color}25` }}
+                    style={{ backgroundColor: 'rgba(181,101,29,0.08)', border: '1px solid rgba(181,101,29,0.18)' }}
                   >
-                    <Icon className="w-6 h-6" style={{ color: f.color }} />
+                    <Icon className="w-6 h-6" style={{ color: '#8b3e17' }} />
                   </div>
-                  <h3 className="text-lg font-bold mb-2" style={{ color: f.color }}>{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
+                  <h3 className="font-heading text-lg font-bold mb-2" style={{ color: '#1a1a2e' }}>{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'oklch(0.50 0.025 70)' }}>{f.description}</p>
                 </motion.div>
               );
             })}
@@ -435,7 +442,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Stats ── */}
-      <section className="py-14 px-6 border-t border-border/30" style={{ background: 'rgba(255,255,255,0.018)' }}>
+      <section className="py-14 px-6" style={{ borderTop: '1px solid rgba(181,101,29,0.15)', background: 'rgba(181,101,29,0.03)' }}>
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {STATS.map((s, idx) => (
@@ -447,8 +454,8 @@ export default function HomePage() {
                 transition={{ delay: idx * 0.08 }}
                 className="ref-card p-5 text-center group hover:scale-[1.02] transition-transform"
               >
-                <div className="text-4xl font-black gradient-text-hero mb-1.5">{s.value}</div>
-                <div className="text-xs text-muted-foreground font-medium">{s.label}</div>
+                <div className="font-heading text-4xl font-black gradient-text-terra mb-1.5">{s.value}</div>
+                <div className="text-xs font-medium" style={{ color: 'oklch(0.50 0.025 70)' }}>{s.label}</div>
               </motion.div>
             ))}
           </div>
@@ -456,7 +463,7 @@ export default function HomePage() {
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how-it-works" className="py-24 px-6 border-t border-border/30">
+      <section id="how-it-works" className="py-24 px-6" style={{ borderTop: '1px solid rgba(181,101,29,0.15)' }}>
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -464,11 +471,11 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#818cf8' }}>Process</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#b5651d' }}>Process</p>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: '#1a1a2e' }}>
               How Reflow Works
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
+            <p className="max-w-lg mx-auto" style={{ color: 'oklch(0.50 0.025 70)' }}>
               Four steps from disruption to full recovery. No manual replanning required.
             </p>
           </motion.div>
@@ -486,13 +493,13 @@ export default function HomePage() {
               >
                 <div className="ref-card p-6 h-full" style={{ borderRadius: 16 }}>
                   <div
-                    className="text-5xl font-black mb-4 leading-none"
-                    style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.6) 0%, rgba(96,165,250,0.4) 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                    className="font-heading text-5xl font-black mb-4 leading-none"
+                    style={{ background: 'linear-gradient(135deg, rgba(181,101,29,0.55) 0%, rgba(139,62,23,0.35) 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
                   >
                     {step.num}
                   </div>
-                  <h3 className="text-base font-bold mb-2">{step.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+                  <h3 className="font-heading text-base font-bold mb-2" style={{ color: '#1a1a2e' }}>{step.title}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: 'oklch(0.50 0.025 70)' }}>{step.desc}</p>
                 </div>
                 {idx < STEPS.length - 1 && (
                   <div className="hidden md:block absolute top-1/2 -right-3 z-10">
@@ -506,22 +513,22 @@ export default function HomePage() {
       </section>
 
       {/* ── Demo section ── */}
-      <section id="demo" className="py-24 px-6 border-t border-border/30" style={{ background: 'rgba(255,255,255,0.018)' }}>
+      <section id="demo" className="py-24 px-6" style={{ borderTop: '1px solid rgba(181,101,29,0.15)', background: 'rgba(181,101,29,0.03)' }}>
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="rounded-3xl p-10 text-center"
-            style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}
+            style={{ background: 'rgba(255,252,245,0.9)', border: '1px solid rgba(181,101,29,0.20)', boxShadow: '0 8px 40px rgba(100,50,10,0.08)' }}
           >
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 glow-blue" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
-              <Shield className="w-8 h-8" style={{ color: '#818cf8' }} />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(181,101,29,0.10)', border: '1px solid rgba(181,101,29,0.25)' }}>
+              <Shield className="w-8 h-8" style={{ color: '#8b3e17' }} />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            <h2 className="font-heading text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: '#1a1a2e' }}>
               See Reflow in Action
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto mb-8 leading-relaxed">
+            <p className="max-w-lg mx-auto mb-8 leading-relaxed" style={{ color: 'oklch(0.50 0.025 70)' }}>
               Experience a realistic 4-day Italy trip with 12 interconnected bookings.
               Trigger a flight delay — watch the ripple effect cascade, analyze the impact,
               compare recovery options, and apply the best plan.
@@ -529,22 +536,22 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 text-left">
               {[
-                { icon: AlertTriangle, text: 'Trigger flight delays, cancellations, weather events', color: '#ef4444' },
-                { icon: BarChart3,    text: 'See downstream impact across all connected bookings', color: '#f59e0b' },
-                { icon: CheckCircle2, text: 'Compare and apply the best recovery plan instantly',  color: '#10b981' },
+                { icon: AlertTriangle, text: 'Trigger flight delays, cancellations, weather events', color: '#c0392b' },
+                { icon: BarChart3,    text: 'See downstream impact across all connected bookings', color: '#c77b21' },
+                { icon: CheckCircle2, text: 'Compare and apply the best recovery plan instantly',  color: '#2d6a4f' },
               ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.text} className="flex items-start gap-3 glass rounded-xl p-4">
+                  <div key={item.text} className="flex items-start gap-3 rounded-xl p-4" style={{ background: 'rgba(181,101,29,0.05)', border: '1px solid rgba(181,101,29,0.12)' }}>
                     <Icon className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: item.color }} />
-                    <span className="text-sm text-muted-foreground">{item.text}</span>
+                    <span className="text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>{item.text}</span>
                   </div>
                 );
               })}
             </div>
 
             <Link href="/dashboard">
-              <button className="inline-flex items-center gap-2 px-10 py-3.5 rounded-xl font-semibold text-sm transition-all shadow-xl glow-blue" style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)', color: 'white' }}>
+              <button className="btn-wandor-primary">
                 <Plane className="w-4 h-4" />
                 Launch Demo
                 <ArrowRight className="w-4 h-4" />
@@ -555,41 +562,43 @@ export default function HomePage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border/30 py-8 px-6">
+      <footer className="py-8 px-6" style={{ borderTop: '1px solid rgba(181,101,29,0.15)' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
-              <Plane className="w-3 h-3 text-primary" />
+            <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'rgba(181,101,29,0.12)', border: '1px solid rgba(181,101,29,0.22)' }}>
+              <Plane className="w-3 h-3" style={{ color: '#8b3e17' }} />
             </div>
-            <span className="text-sm font-bold tracking-widest gradient-text-blue">REFLOW</span>
+            <span className="font-heading text-sm font-bold tracking-widest" style={{ color: '#1a1a2e' }}>reflow</span>
           </div>
-          <p className="text-xs text-muted-foreground">Travel Disruption Recovery Engine</p>
+          <p className="text-xs" style={{ color: 'oklch(0.55 0.025 70)' }}>Travel Disruption Recovery Engine</p>
         </div>
       </footer>
       {/* ── Upload Modal ── */}
       <AnimatePresence>
         {isUploadModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 backdrop-blur-md p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(245,240,232,0.88)', backdropFilter: 'blur(8px)' }}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-xl glass-card rounded-2xl overflow-hidden shadow-2xl border border-border/60 flex flex-col"
+              className="w-full max-w-xl rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: 'rgba(255,252,245,0.97)', border: '1px solid rgba(181,101,29,0.20)', boxShadow: '0 20px 60px rgba(100,50,10,0.15)' }}
             >
               {/* Modal Header */}
-              <div className="p-6 border-b border-border/40 flex items-center justify-between">
+              <div className="p-6 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(181,101,29,0.12)' }}>
                 <div>
-                  <h3 className="font-bold text-lg flex items-center gap-2 text-foreground">
-                    <Plane className="w-5 h-5 text-primary" />
+                  <h3 className="font-heading font-bold text-lg flex items-center gap-2" style={{ color: '#1a1a2e' }}>
+                    <Plane className="w-5 h-5" style={{ color: '#8b3e17' }} />
                     Import Your Travel Itinerary
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs mt-0.5" style={{ color: 'oklch(0.55 0.025 70)' }}>
                     Upload an e-ticket PDF, booking confirmation, or PNR reference
                   </p>
                 </div>
                 <button
                   onClick={() => !isAnalyzing && setIsUploadModalOpen(false)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ color: 'oklch(0.55 0.025 70)' }}
                   disabled={isAnalyzing}
                 >
                   <X className="w-4 h-4" />
@@ -599,25 +608,29 @@ export default function HomePage() {
               {/* Mode Tabs */}
               {!isAnalyzing && (
                 <div className="px-6 pt-4">
-                  <div className="grid grid-cols-2 gap-2 p-1 bg-background/60 rounded-xl border border-border/40">
+                  <div className="grid grid-cols-2 gap-2 p-1 rounded-xl" style={{ background: 'rgba(181,101,29,0.06)', border: '1px solid rgba(181,101,29,0.12)' }}>
                     <button
                       onClick={() => setUploadMode('pdf')}
                       className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         uploadMode === 'pdf'
-                          ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
-                          : 'text-muted-foreground hover:text-foreground'
+                          ? ''
+                          : ''
                       }`}
+                      style={uploadMode === 'pdf'
+                        ? { background: '#1a1a2e', color: '#f5f0e8', boxShadow: '0 2px 8px rgba(26,26,46,0.2)' }
+                        : { color: 'oklch(0.50 0.025 70)' }
+                      }
                     >
                       <FileText className="w-3.5 h-3.5" />
                       Upload PDF / E-Ticket
                     </button>
                     <button
                       onClick={() => setUploadMode('text')}
-                      className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
-                        uploadMode === 'text'
-                          ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
+                      className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all`}
+                      style={uploadMode === 'text'
+                        ? { background: '#1a1a2e', color: '#f5f0e8', boxShadow: '0 2px 8px rgba(26,26,46,0.2)' }
+                        : { color: 'oklch(0.50 0.025 70)' }
+                      }
                     >
                       <Zap className="w-3.5 h-3.5" />
                       Paste PNR / JSON
@@ -836,17 +849,18 @@ export default function HomePage() {
 
               {/* Modal Footer */}
               {!isAnalyzing && (
-                <div className="p-6 border-t border-border/40 flex items-center justify-between">
+                <div className="p-6 flex items-center justify-between" style={{ borderTop: '1px solid rgba(181,101,29,0.12)' }}>
                   <button
                     onClick={() => setIsUploadModalOpen(false)}
-                    className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                    className="px-4 py-2 text-xs font-semibold transition-colors"
+                    style={{ color: 'oklch(0.55 0.025 70)' }}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAnalyze}
                     disabled={uploadMode === 'pdf' ? !selectedFile : !itineraryText.trim()}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-blue shadow-lg shadow-primary/25"
+                    className="btn-wandor-primary text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Zap className="w-4 h-4" />
                     Start Risk Analysis
