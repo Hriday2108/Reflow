@@ -278,8 +278,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
-            style={{ color: 'oklch(0.50 0.025 70)' }}
+            className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-gray-800 font-medium drop-shadow-sm"
           >
             Reflow detects disruptions, understands their ripple effects across your entire itinerary,
             and creates the best recovery options for your trip — instantly.
@@ -311,8 +310,7 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex items-center justify-center gap-6 mt-12 text-xs"
-            style={{ color: 'oklch(0.55 0.025 70)' }}
+            className="flex items-center justify-center gap-6 mt-12 text-xs font-bold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wide"
           >
             {[
               { color: '#2d6a4f', label: 'Confirmed' },

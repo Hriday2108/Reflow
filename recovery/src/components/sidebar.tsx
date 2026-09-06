@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Loader2,
   Compass,
+  CloudLightning,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,7 @@ export type SidebarView =
   | 'itinerary'
   | 'recovery'
   | 'risk'
+  | 'weather'
   | 'alerts'
   | 'preferences';
 
@@ -42,6 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'itinerary',    label: 'My Trips',        icon: Compass },
   { id: 'recovery',     label: 'Recovery Plans',  icon: Wand2 },
   { id: 'risk',         label: 'Risk Monitor',    icon: ShieldAlert },
+  { id: 'weather',      label: 'Weather & Risk',  icon: CloudLightning },
   { id: 'alerts',       label: 'Alerts',          icon: Bell },
   { id: 'preferences',  label: 'Preferences',     icon: SlidersHorizontal },
 ];

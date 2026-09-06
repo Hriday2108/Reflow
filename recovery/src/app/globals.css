@@ -531,18 +531,22 @@
   gap: 8px;
   padding: 11px 26px;
   border-radius: 9999px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
   color: #1a1a2e;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.04em;
-  border: 1.5px solid rgba(26, 26, 46, 0.35);
+  border: 1.5px solid rgba(26, 26, 46, 0.85);
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 .btn-wandor-secondary:hover {
-  background: rgba(26, 26, 46, 0.06);
-  border-color: rgba(26, 26, 46, 0.55);
+  background: #ffffff;
+  border-color: #1a1a2e;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* ══════════════════════════════════════════════════════════

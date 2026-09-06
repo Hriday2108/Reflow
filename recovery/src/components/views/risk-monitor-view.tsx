@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, ArrowRight, Eye, X, AlertTriangle, Info, Map } from 'lucide-react';
 import type { Booking, BookingDependency, RiskWarning } from '@/types';
@@ -10,7 +10,7 @@ import { computeRiskWarnings } from '@/lib/disruption-engine';
 interface RiskMonitorViewProps {
   bookings: Booking[];
   dependencies: BookingDependency[];
-  onNavigate?: (view: 'itinerary') => void;
+  onNavigate?: (view: 'itinerary' | 'weather') => void;
 }
 
 const RISK_COLORS = {
@@ -57,8 +57,49 @@ function RiskRing({ pct, color }: { pct: number; color: string }) {
 }
 
 export default function RiskMonitorView({ bookings, dependencies, onNavigate }: RiskMonitorViewProps) {
-  const warnings = useMemo(() => computeRiskWarnings(bookings, dependencies), [bookings, dependencies]);
+  const engineWarnings = useMemo(() => computeRiskWarnings(bookings, dependencies), [bookings, dependencies]);
   const [selectedRisk, setSelectedRisk] = useState<RiskWarning | null>(null);
+  const [weatherWarnings, setWeatherWarnings] = useState<RiskWarning[]>([]);
+
+  // Fetch weather and map severe weather to RiskWarnings
+  useEffect(() => {
+    const locs = Array.from(new Set(bookings.map(b => b.location).filter(Boolean)));
+    if (locs.length === 0) return;
+
+    let mounted = true;
+    const fetchWeathers = async () => {
+      try {
+        const results = await Promise.all(locs.map(async loc => {
+           const res = await fetch(`/api/weather?location=${encodeURIComponent(loc as string)}`);
+           if (!res.ok) return null;
+           return { loc, data: await res.json() };
+        }));
+
+        if (!mounted) return;
+
+        const newWarnings: RiskWarning[] = [];
+        results.forEach(r => {
+           if (r && r.data && r.data.isSevere) {
+             newWarnings.push({
+               id: `weather-${r.loc}`,
+               type: 'weather' as any,
+               severity: 'high',
+               message: `Severe weather (${r.data.description}) expected in ${r.loc}. This may affect your connections.`,
+               bookingIds: bookings.filter(b => b.location === r.loc).map(b => b.id)
+             });
+           }
+        });
+        setWeatherWarnings(newWarnings);
+      } catch (e) {
+         console.error(e);
+      }
+    };
+    fetchWeathers();
+    return () => { mounted = false; };
+  }, [bookings]);
+
+  const warnings = useMemo(() => [...engineWarnings, ...weatherWarnings], [engineWarnings, weatherWarnings]);
+
 
   return (
     <div className="h-full overflow-y-auto">
@@ -147,12 +188,27 @@ export default function RiskMonitorView({ bookings, dependencies, onNavigate }: 
                     {/* CTA buttons */}
                     <div className="flex flex-col gap-1.5">
                       <button
-                        onClick={() => setSelectedRisk(warning)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                        style={{ background: ring + '15', border: `1px solid ${ring}30`, color: ring }}
+                        onClick={() => {
+                          if (warning.type === 'weather' as any && onNavigate) {
+                            onNavigate('weather');
+                          } else {
+                            setSelectedRisk(selectedRisk?.id === warning.id ? null : warning);
+                          }
+                        }}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-colors border ${cfg.border} hover:bg-white/5`}
+                        style={{ color: ring }}
                       >
-                        <Eye className="w-3.5 h-3.5" />
-                        View Details
+                        {warning.type === 'weather' as any ? (
+                          <>View Weather Impact <ArrowRight className="w-3.5 h-3.5" /></>
+                        ) : (
+                          <>
+                            {selectedRisk?.id === warning.id ? (
+                              <><X className="w-3.5 h-3.5" /> Close Details</>
+                            ) : (
+                              <><Eye className="w-3.5 h-3.5" /> Inspect Risk</>
+                            )}
+                          </>
+                        )}
                       </button>
                       {onNavigate && (
                         <button

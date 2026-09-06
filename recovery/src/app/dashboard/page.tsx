@@ -17,6 +17,7 @@ import DashboardOverview from '@/components/views/dashboard-overview';
 import RiskMonitorView from '@/components/views/risk-monitor-view';
 import AlertsView from '@/components/views/alerts-view';
 import PreferencesView from '@/components/views/preferences-view';
+import WeatherView from '@/components/views/weather-view';
 
 // Queries & engine
 import {
@@ -512,6 +513,12 @@ export default function DashboardPage() {
             {activeView === 'preferences' && (
               <motion.div key="preferences" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 overflow-hidden">
                 <PreferencesView />
+              </motion.div>
+            )}
+
+            {activeView === 'weather' && (
+              <motion.div key="weather" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 overflow-hidden">
+                <WeatherView bookings={filteredBookings} dependencies={dependencies} onNavigate={setActiveView} />
               </motion.div>
             )}
           </AnimatePresence>

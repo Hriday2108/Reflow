@@ -13,5 +13,26 @@ export function formatCurrency(usdAmount: number | string): string {
     style: 'currency',
     currency: 'INR',
     maximumFractionDigits: 0,
-  }).format(inr);
+  }).format(amount * 94.61);
+}
+
+export function extractCityFromLocation(location: string): string {
+  if (!location) return '';
+  let city = location;
+
+  const separators = ['→', '->', '—', '-'];
+  for (const sep of separators) {
+    if (city.includes(sep)) {
+      city = city.split(sep).pop()!;
+      break;
+    }
+  }
+
+  city = city.replace(/\([^)]*\)/g, '');
+
+  if (city.includes(',')) {
+    city = city.split(',')[0];
+  }
+
+  return city.trim();
 }
