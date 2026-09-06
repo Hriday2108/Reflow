@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Booking, BookingStatus } from '@/types';
 import {
   Plane, Train, Hotel, Car, Ticket, CalendarDays,
-  Clock, MapPin, DollarSign, Shield, X, Maximize2, Minimize2, GripHorizontal, Users,
+  Clock, MapPin, IndianRupee, Shield, X, Maximize2, Minimize2, GripHorizontal, Users,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -227,8 +227,8 @@ export default function BookingDetailPanel({ booking, onClose }: BookingDetailPa
           {endDate && (
             <Row icon={Clock} label="Arrival" value={fmt(endDate.toISOString())} color={cfg.color} />
           )}
-          <Row icon={Users} label="Traveler" value={booking.traveler_name || 'Alex Morgan'} color={cfg.color} />
-          <Row icon={DollarSign} label="Cost" value={formatCurrency(booking.cost)} color={cfg.color} />
+          <Row icon={Users} label="Traveler" value={(booking as any).traveler_name || 'Alex Morgan'} color={cfg.color} />
+          <Row icon={IndianRupee} label="Cost" value={formatCurrency(booking.cost)} color={cfg.color} />
           <Row icon={Shield} label="Refund" value={`${booking.refund_percent}%`} color={cfg.color} />
 
           {booking.cancellation_policy && (

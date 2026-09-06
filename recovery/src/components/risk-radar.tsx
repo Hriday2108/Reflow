@@ -9,7 +9,7 @@ import {
   ShieldAlert,
   Clock,
   AlertTriangle,
-  DollarSign,
+  IndianRupee,
 } from 'lucide-react';
 
 const severityConfig: Record<Severity, { color: string; bg: string; label: string }> = {
@@ -20,7 +20,7 @@ const severityConfig: Record<Severity, { color: string; bg: string; label: strin
 
 const typeIcons: Record<string, React.ElementType> = {
   'tight-connection': Clock,
-  'non-refundable': DollarSign,
+  'non-refundable': IndianRupee,
   'weather-risk': AlertTriangle,
   'late-arrival': Clock,
 };

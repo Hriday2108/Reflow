@@ -8,7 +8,7 @@ import type { RecoveryOption, DisruptionEvent } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
-  Wand2, Clock, DollarSign, Star, CheckCircle2,
+  Wand2, Clock, IndianRupee, Star, CheckCircle2,
   Loader2, ArrowRight, Plane, Train, Hotel, Car, Ticket, X, Info, Check
 } from 'lucide-react';
 

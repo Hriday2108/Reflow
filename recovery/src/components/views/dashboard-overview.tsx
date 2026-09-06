@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   Plane, Train, Hotel, Car, Ticket, CalendarDays,
   AlertTriangle, TrendingUp, CheckCircle2, ShieldAlert,
-  ArrowRight, Clock, DollarSign, Activity, Zap,
+  ArrowRight, Clock, IndianRupee, Activity, Zap,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import StatusBadge from '@/components/status-badge';
@@ -142,7 +142,7 @@ export default function DashboardOverview({
       label: 'Est. Extra Cost',
       sub: 'Potential',
       value: formatCurrency(extraCost),
-      icon: DollarSign,
+      icon: IndianRupee,
       color: extraCost > 0 ? '#f59e0b' : '#10b981',
       stripe: extraCost > 0 ? 'stat-card-amber' : 'stat-card-green',
     },
@@ -407,14 +407,14 @@ export default function DashboardOverview({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" style={{ color: '#818cf8' }} />
+                  <IndianRupee className="w-4 h-4" style={{ color: '#818cf8' }} />
                   Total Trip Cost
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">Sum of all bookings in itinerary</p>
               </div>
               <div className="text-right">
                 <div className="text-2xl font-black gradient-text-blue">
-                  ${bookings.reduce((s, b) => s + Number(b.cost), 0).toLocaleString()}
+                  {formatCurrency(bookings.reduce((s, b) => s + Number(b.cost), 0))}
                 </div>
                 <p className="text-[10px] text-muted-foreground">{bookings.length} bookings</p>
               </div>

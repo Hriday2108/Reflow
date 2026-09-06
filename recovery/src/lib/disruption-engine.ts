@@ -13,6 +13,7 @@ import {
   RecoveryOption,
   RiskWarning,
 } from '@/types';
+import { formatCurrency } from '@/lib/utils';
 
 // ── Downstream traversal (BFS) ──────────────────────────
 
@@ -261,7 +262,7 @@ function generateCancellationOptions(
           field: 'status',
           old_value: 'disrupted',
           new_value: 'rebooked',
-          description: `Rebook on same-day alternative. Refund of $${refundAmount.toFixed(0)} applied.`,
+          description: `Rebook on same-day alternative. Refund of ${formatCurrency(refundAmount)} applied.`,
         },
         ...downstream.map((b) => ({
           booking_id: b.id,
@@ -285,7 +286,7 @@ function generateCancellationOptions(
           field: 'status',
           old_value: 'disrupted',
           new_value: 'cancelled',
-          description: `Cancel and claim $${refundAmount.toFixed(0)} refund`,
+          description: `Cancel and claim ${formatCurrency(refundAmount)} refund`,
         },
         ...downstream.map((b) => ({
           booking_id: b.id,
@@ -393,7 +394,7 @@ function generateWeatherOptions(
           field: 'status',
           old_value: 'disrupted',
           new_value: 'cancelled',
-          description: `Cancel due to weather — full refund of $${booking.cost.toFixed(0)}`,
+          description: `Cancel due to weather — full refund of ${formatCurrency(booking.cost)}`,
         },
         ...downstream.map((b) => ({
           booking_id: b.id,
@@ -611,7 +612,7 @@ export function computeRiskWarnings(
       warnings.push({
         id: `risk-${warningId++}`,
         bookingIds: [to.id],
-        message: `${to.title} ($${to.cost}) is non-refundable — consider travel insurance`,
+        message: `${to.title} (${formatCurrency(to.cost)}) is non-refundable — consider travel insurance`,
         severity: 'medium',
         type: 'non-refundable',
       });
