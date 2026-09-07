@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useRef } from 'react';
+import StrokeText from '@/components/StrokeText';
 import {
   Plane,
   Train,
@@ -223,12 +224,6 @@ export default function HomePage() {
             <a href="#how-it-works" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
             <a href="#demo" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Demo</a>
           </div>
-          <Link href="/dashboard">
-            <button className="btn-wandor-primary text-xs">
-              Get Started
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </Link>
         </div>
       </nav>
 
@@ -264,14 +259,36 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] mb-6"
+            className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] mb-6 flex flex-col items-center"
             style={{ color: '#1a1a2e' }}
           >
-            When your journey is
-            <br />
-            <span className="gradient-text-terra">disrupted,</span>
-            <br />
-            your plans shouldn&apos;t be.
+            <span className="w-full max-w-[550px] sm:max-w-[700px] md:max-w-[900px] flex justify-center -my-2 md:-my-4">
+              <StrokeText 
+                text="When your journey is" 
+                strokeColor="#1a1a2e" 
+                fillColor="#1a1a2e" 
+                fontSize={76}
+                strokeWidth={2}
+              />
+            </span>
+            <span className="w-full max-w-[300px] sm:max-w-[400px] md:max-w-[500px] flex justify-center -my-2 md:-my-4">
+              <StrokeText 
+                text="disrupted," 
+                strokeColor="#b5651d" 
+                fillColor="#b5651d" 
+                fontSize={76}
+                strokeWidth={2}
+              />
+            </span>
+            <span className="w-full max-w-[650px] sm:max-w-[800px] md:max-w-[1000px] flex justify-center -my-2 md:-my-4">
+              <StrokeText 
+                text="your plans shouldn't be." 
+                strokeColor="#1a1a2e" 
+                fillColor="#1a1a2e" 
+                fontSize={76}
+                strokeWidth={2}
+              />
+            </span>
           </motion.h1>
 
           <motion.p
