@@ -332,7 +332,7 @@ export default function WeatherView({ bookings, dependencies, onNavigate }: Weat
                           </div>
                           <div>
                             <div className="text-sm font-medium">{b.title}</div>
-                            <div className="text-[10px] text-muted-foreground uppercase">{b.type} • {b.startTime && !isNaN(new Date(b.startTime).getTime()) ? new Date(b.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Time TBA'}</div>
+                            <div className="text-[10px] text-muted-foreground uppercase">{b.type} • {b.start_time && !isNaN(new Date(b.start_time).getTime()) ? new Date(b.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Time TBA'}</div>
                           </div>
                         </div>
                         <span className={cn("px-2 py-1 rounded text-[10px] font-bold uppercase", getRiskColor(risk.level))}>

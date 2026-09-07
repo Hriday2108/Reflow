@@ -162,7 +162,7 @@ export async function fetchWeatherForLocation(location: string): Promise<Weather
         model: 'gemini-3.5-flash',
         contents: prompt,
       });
-      const aiCity = response.text.trim();
+      const aiCity = response.text ? response.text.trim() : '';
       
       if (aiCity && aiCity !== 'UNKNOWN') {
         const q = encodeURIComponent(aiCity);
