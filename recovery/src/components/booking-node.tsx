@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, BookingStatus } from '@/types';
+import type { Booking, BookingStatus, DisruptionEvent } from '@/types';
 import {
   Plane,
   Train,
@@ -12,8 +12,10 @@ import {
   Car,
   Ticket,
   CalendarDays,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDuration } from '@/lib/utils';
 
 // ── Icon map ─────────────────────────────────────────────
 
@@ -81,6 +83,7 @@ const statusLabels: Record<BookingStatus, string> = {
 
 type BookingNodeData = {
   booking: Booking;
+  disruption?: DisruptionEvent;
   isSelected: boolean;
   onSelect: (booking: Booking) => void;
   isSelectableTarget?: boolean;
@@ -93,6 +96,7 @@ type BookingNodeData = {
 function BookingNodeComponent({ data }: NodeProps) {
   const {
     booking,
+    disruption,
     isSelected,
     onSelect,
     isSelectableTarget = false,
@@ -101,6 +105,10 @@ function BookingNodeComponent({ data }: NodeProps) {
   } = data as unknown as BookingNodeData;
   const Icon = iconMap[booking.type] || CalendarDays;
   const style = statusStyles[booking.status];
+  
+  const delayMinutes = booking.delay_minutes || disruption?.delay_minutes || 0;
+  const isDelayDisrupted = booking.status === 'disrupted' && (delayMinutes > 0 || disruption?.type === 'delay');
+
   const time = new Date(booking.start_time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
@@ -135,7 +143,7 @@ function BookingNodeComponent({ data }: NodeProps) {
           }
         }}
         className={`
-          relative w-[260px] rounded-xl border-2 p-4
+          relative w-[265px] rounded-xl border-2 p-4
           transition-all duration-300 select-none
           ${nodeStateClass}
           bg-card/90 backdrop-blur-sm
@@ -165,28 +173,40 @@ function BookingNodeComponent({ data }: NodeProps) {
             <p className="text-[12px] text-muted-foreground mt-0.5">
               {day} · {time}
             </p>
+
+            {/* Delay duration pill if delayed */}
+            {isDelayDisrupted && (
+              <div className="flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-500 font-bold text-[10px] w-fit shadow-sm">
+                <Clock className="w-3 h-3 text-amber-500 flex-shrink-0 animate-pulse" />
+                <span>Delayed +{formatDuration(delayMinutes || 120)}</span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer row */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border/20">
           <span className="text-[13px] font-medium text-muted-foreground">
             {formatCurrency(booking.cost)}
           </span>
           <Badge
             variant="secondary"
-            className={`text-[10px] px-1.5 py-0 h-5 font-semibold ${style.badge} ${style.badgeBg} border-0`}
+            className={`text-[10px] px-2 py-0.5 h-5 font-bold ${
+              isDelayDisrupted
+                ? 'text-amber-500 bg-amber-500/20 border border-amber-500/30'
+                : `${style.badge} ${style.badgeBg} border-0`
+            }`}
           >
-            {statusLabels[booking.status]}
+            {isDelayDisrupted ? `+${formatDuration(delayMinutes || 120)} Delay` : statusLabels[booking.status]}
           </Badge>
         </div>
 
         {/* Status indicator dot */}
         <div
-          className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-card
+          className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-card shadow-sm
             ${booking.status === 'confirmed' ? 'bg-confirmed' : ''}
             ${booking.status === 'at-risk' ? 'bg-at-risk' : ''}
-            ${booking.status === 'disrupted' ? 'bg-disrupted' : ''}
+            ${booking.status === 'disrupted' ? (isDelayDisrupted ? 'bg-amber-500 animate-pulse' : 'bg-disrupted') : ''}
             ${booking.status === 'rebooked' ? 'bg-rebooked' : ''}
             ${booking.status === 'cancelled' ? 'bg-cancelled' : ''}
           `}

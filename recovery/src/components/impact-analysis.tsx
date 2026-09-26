@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ImpactAnalysis, ImpactItem } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDuration } from '@/lib/utils';
 import {
   AlertTriangle, DollarSign, Target, ChevronDown,
-  Plane, Train, Car, Hotel, Ticket, AlertCircle,
+  Plane, Train, Car, Hotel, Ticket, AlertCircle, Clock,
   X, Maximize2, Minimize2,
 } from 'lucide-react';
 
@@ -99,28 +99,41 @@ export default function ImpactAnalysisPanel({ analyses, onClose }: ImpactAnalysi
           {analyses.map((analysis, index) => {
             const { disruption, directImpact, downstreamImpacts } = analysis;
             const DirectIcon = BOOKING_ICONS[directImpact.booking.type] || Target;
+            const delayMinutes = disruption.delay_minutes || directImpact.booking.delay_minutes || 0;
+            const isDelay = disruption.type === 'delay' || delayMinutes > 0;
 
             return (
               <div key={disruption.id} className="space-y-3">
                 {/* Disruption Header */}
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-disrupted" />
-                  <p className="text-xs font-bold text-disrupted uppercase tracking-widest">{disruption.type.replace('-', ' ')} ({disruption.severity})</p>
+                  <div className={`w-1.5 h-1.5 rounded-full ${isDelay ? 'bg-amber-500' : 'bg-disrupted'}`} />
+                  <p className={`text-xs font-bold uppercase tracking-widest ${isDelay ? 'text-amber-500' : 'text-disrupted'}`}>
+                    {disruption.type.replace('-', ' ')} ({disruption.severity})
+                    {delayMinutes > 0 && ` • +${formatDuration(delayMinutes)} Delay`}
+                  </p>
                 </div>
 
                 {/* Direct impact card */}
-                <div className="rounded-xl border border-disrupted/15 bg-card/60 overflow-hidden">
-                  <div className="p-3 bg-disrupted/5 border-b border-disrupted/10 flex items-center justify-between">
+                <div className={`rounded-xl border overflow-hidden ${isDelay ? 'border-amber-500/25 bg-card/60' : 'border-disrupted/15 bg-card/60'}`}>
+                  <div className={`p-3 border-b flex items-center justify-between ${isDelay ? 'bg-amber-500/10 border-amber-500/15' : 'bg-disrupted/5 border-disrupted/10'}`}>
                     <div className="flex items-center gap-2">
-                      <DirectIcon className="w-4 h-4 text-disrupted" />
+                      <DirectIcon className={`w-4 h-4 ${isDelay ? 'text-amber-500' : 'text-disrupted'}`} />
                       <p className="text-sm font-semibold text-foreground leading-tight">{directImpact.booking.title}</p>
                     </div>
-                    {directImpact.booking.cost > 0 && (
-                      <p className="text-xs font-medium text-muted-foreground">{formatCurrency(directImpact.booking.cost)}</p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {delayMinutes > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-amber-500 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full shadow-sm">
+                          <Clock className="w-3 h-3 text-amber-500" />
+                          +{formatDuration(delayMinutes)}
+                        </span>
+                      )}
+                      {directImpact.booking.cost > 0 && (
+                        <p className="text-xs font-medium text-muted-foreground">{formatCurrency(directImpact.booking.cost)}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-3 flex items-start gap-2 bg-disrupted/5">
-                    <AlertCircle className="w-3.5 h-3.5 text-disrupted mt-0.5 flex-shrink-0" />
+                  <div className={`p-3 flex items-start gap-2 ${isDelay ? 'bg-amber-500/5' : 'bg-disrupted/5'}`}>
+                    <AlertCircle className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${isDelay ? 'text-amber-500' : 'text-disrupted'}`} />
                     <p className="text-xs text-muted-foreground leading-relaxed">{directImpact.reason}</p>
                   </div>
                 </div>

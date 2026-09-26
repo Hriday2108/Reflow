@@ -15,10 +15,10 @@ export async function POST(request: NextRequest) {
     // 2. Delete disruption events
     await DisruptionModel.deleteMany({ trip_id: tripId });
     
-    // 3. Reset all booking statuses to confirmed
+    // 3. Reset all booking statuses to confirmed and clear delay minutes
     await BookingModel.updateMany(
       { trip_id: tripId },
-      { status: 'confirmed' }
+      { status: 'confirmed', delay_minutes: 0 }
     );
     
     return NextResponse.json({ success: true });

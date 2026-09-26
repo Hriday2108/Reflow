@@ -9,7 +9,8 @@ export async function POST(request: NextRequest) {
   try {
     const tripId = request.nextUrl.searchParams.get('tripId') || DEMO_TRIP_ID;
     const body = await request.json();
-    const { bookingId, type, severity, description } = body;
+    const { bookingId, type, severity, description, delayMinutes } = body;
+    const parsedDelay = delayMinutes ? Number(delayMinutes) : 0;
     
     await dbConnect();
     
@@ -20,10 +21,14 @@ export async function POST(request: NextRequest) {
       type,
       severity,
       description,
+      delay_minutes: parsedDelay,
     });
     
-    // 2. Update the affected booking status to 'disrupted'
-    await BookingModel.updateOne({ _id: bookingId }, { status: 'disrupted' });
+    // 2. Update the affected booking status to 'disrupted' and record delay_minutes
+    await BookingModel.updateOne(
+      { _id: bookingId },
+      { status: 'disrupted', delay_minutes: parsedDelay }
+    );
     
     // 3. Get dependencies and mark downstream as 'at-risk'
     const depsDoc = await DependencyModel.find({ trip_id: tripId }).lean();
@@ -47,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (affectedBooking) {
       const downstreamBookings = bookings.filter((b: any) => downstreamIds.includes(b.id));
       const options = generateRecoveryOptions(
-        { ...disruption.toObject(), id: disruption._id },
+        { ...disruption.toObject(), id: disruption._id, delay_minutes: parsedDelay },
         affectedBooking,
         downstreamBookings,
         bookings
@@ -69,7 +74,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    return NextResponse.json({ ...disruption.toObject(), id: disruption._id });
+    return NextResponse.json({ ...disruption.toObject(), id: disruption._id, delay_minutes: parsedDelay });
   } catch (error) {
     console.error('Error creating disruption:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

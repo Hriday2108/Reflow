@@ -13,7 +13,7 @@ import {
   RecoveryOption,
   RiskWarning,
 } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDuration } from '@/lib/utils';
 
 // ── Downstream traversal (BFS) ──────────────────────────
 
@@ -78,9 +78,10 @@ export function computeImpactAnalysis(
 
 function getDirectImpactReason(disruption: DisruptionEvent, booking: Booking): string {
   const desc = disruption.description || '';
+  const delayStr = disruption.delay_minutes ? ` by ${formatDuration(disruption.delay_minutes)}` : '';
   switch (disruption.type) {
     case 'delay':
-      return `${booking.title} has been delayed. ${desc}`;
+      return `${booking.title} has been delayed${delayStr}. ${desc}`;
     case 'cancellation':
       return `${booking.title} has been cancelled. ${desc}`;
     case 'missed-connection':
@@ -110,8 +111,10 @@ function getDownstreamImpactReason(
   });
 
   switch (disruption.type) {
-    case 'delay':
-      return `${downstream.title} (scheduled ${downTime}) is at risk because ${source.title} is delayed past its ${sourceTime} arrival.`;
+    case 'delay': {
+      const delayInfo = disruption.delay_minutes ? `is delayed by ${formatDuration(disruption.delay_minutes)}` : 'is delayed';
+      return `${downstream.title} (scheduled ${downTime}) is at risk because ${source.title} ${delayInfo} past its ${sourceTime} arrival.`;
+    }
     case 'cancellation':
       return `${downstream.title} depends on ${source.title}, which has been cancelled.`;
     case 'missed-connection':
@@ -137,7 +140,7 @@ export function generateRecoveryOptions(
 
   switch (disruption.type) {
     case 'delay':
-      return generateDelayOptions(affectedBooking, downstreamBookings, totalBookings);
+      return generateDelayOptions(affectedBooking, downstreamBookings, totalBookings, disruption.delay_minutes || 120);
     case 'cancellation':
       return generateCancellationOptions(affectedBooking, downstreamBookings, totalBookings);
     case 'weather':
@@ -197,17 +200,22 @@ function generateTimingChanges(
 function generateDelayOptions(
   booking: Booking,
   downstream: Booking[],
-  totalBookings: number
+  totalBookings: number,
+  delayMinutes: number = 120
 ): Omit<RecoveryOption, 'id' | 'disruption_id'>[] {
   const affectedCount = 1 + downstream.length;
   const pctAffected = Math.round((affectedCount / totalBookings) * 100);
 
+  const durationStr = formatDuration(delayMinutes);
+  const rebookDelay = Math.min(45, Math.max(15, Math.round(delayMinutes * 0.35)));
+  const altTransportDelay = Math.min(90, Math.max(30, Math.round(delayMinutes * 0.65)));
+
   return [
     {
-      label: 'Wait It Out — Keep Current Booking',
+      label: `Wait It Out — Keep Current Booking (+${durationStr})`,
       cost_delta: 0,
-      time_delta_minutes: 120,
-      convenience_score: 2,
+      time_delta_minutes: delayMinutes,
+      convenience_score: delayMinutes > 180 ? 1 : delayMinutes > 90 ? 2 : 3,
       percent_itinerary_affected: pctAffected,
       changes: [
         {
@@ -215,17 +223,31 @@ function generateDelayOptions(
           field: 'status',
           old_value: 'disrupted',
           new_value: 'confirmed',
-          description: `Accept delay on ${booking.title} and adjust downstream timings`,
+          description: `Accept ${durationStr} delay on ${booking.title} and adjust downstream timings`,
         },
-        // Shift all downstream bookings by 120 min
-        ...generateTimingChanges(downstream, 120, 'confirmed'),
+        {
+          booking_id: booking.id,
+          field: 'start_time',
+          old_value: booking.start_time,
+          new_value: shiftTime(booking.start_time, delayMinutes),
+          description: `Shift ${booking.title} departure by +${durationStr}`,
+        },
+        ...(booking.end_time ? [{
+          booking_id: booking.id,
+          field: 'end_time',
+          old_value: booking.end_time,
+          new_value: shiftTime(booking.end_time, delayMinutes),
+          description: `Shift ${booking.title} arrival by +${durationStr}`,
+        }] : []),
+        // Shift all downstream bookings by delayMinutes
+        ...generateTimingChanges(downstream, delayMinutes, 'confirmed'),
       ],
       selected: false,
     },
     {
-      label: `Rebook Next Available ${booking.type === 'flight' ? 'Flight' : 'Service'}`,
+      label: `Rebook Next Available ${booking.type === 'flight' ? 'Flight' : 'Service'} (+${formatDuration(rebookDelay)})`,
       cost_delta: booking.type === 'flight' ? 85 : 25,
-      time_delta_minutes: 45,
+      time_delta_minutes: rebookDelay,
       convenience_score: 4,
       percent_itinerary_affected: Math.round((2 / totalBookings) * 100),
       changes: [
@@ -236,8 +258,22 @@ function generateDelayOptions(
           new_value: 'rebooked',
           description: `Rebook to next available ${booking.type} — minimal delay`,
         },
-        // Only first downstream shifted by 45 min; rest confirmed as-is
-        ...generateTimingChanges(downstream.slice(0, 1), 45, 'confirmed'),
+        {
+          booking_id: booking.id,
+          field: 'start_time',
+          old_value: booking.start_time,
+          new_value: shiftTime(booking.start_time, rebookDelay),
+          description: `Shift ${booking.title} departure by +${formatDuration(rebookDelay)}`,
+        },
+        ...(booking.end_time ? [{
+          booking_id: booking.id,
+          field: 'end_time',
+          old_value: booking.end_time,
+          new_value: shiftTime(booking.end_time, rebookDelay),
+          description: `Shift ${booking.title} arrival by +${formatDuration(rebookDelay)}`,
+        }] : []),
+        // Only first downstream shifted by rebookDelay; rest confirmed as-is
+        ...generateTimingChanges(downstream.slice(0, 1), rebookDelay, 'confirmed'),
         ...downstream.slice(1).map((b) => ({
           booking_id: b.id,
           field: 'status',
@@ -249,9 +285,9 @@ function generateDelayOptions(
       selected: false,
     },
     {
-      label: 'Switch to Alternative Transport + Adjust Downstream',
+      label: `Switch to Alternative Transport (+${formatDuration(altTransportDelay)})`,
       cost_delta: booking.type === 'flight' ? 45 : 15,
-      time_delta_minutes: 90,
+      time_delta_minutes: altTransportDelay,
       convenience_score: 3,
       percent_itinerary_affected: pctAffected,
       changes: [
@@ -262,8 +298,22 @@ function generateDelayOptions(
           new_value: 'rebooked',
           description: `Switch to alternative ${booking.type === 'flight' ? 'train' : 'bus'} service`,
         },
-        // Shift all downstream by 90 min
-        ...generateTimingChanges(downstream, 90, 'confirmed'),
+        {
+          booking_id: booking.id,
+          field: 'start_time',
+          old_value: booking.start_time,
+          new_value: shiftTime(booking.start_time, altTransportDelay),
+          description: `Shift departure by +${formatDuration(altTransportDelay)}`,
+        },
+        ...(booking.end_time ? [{
+          booking_id: booking.id,
+          field: 'end_time',
+          old_value: booking.end_time,
+          new_value: shiftTime(booking.end_time, altTransportDelay),
+          description: `Shift arrival by +${formatDuration(altTransportDelay)}`,
+        }] : []),
+        // Shift all downstream by altTransportDelay
+        ...generateTimingChanges(downstream, altTransportDelay, 'confirmed'),
       ],
       selected: false,
     },

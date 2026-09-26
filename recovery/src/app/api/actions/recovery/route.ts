@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { BookingModel, DisruptionModel, RecoveryOptionModel } from '@/models';
 
-const ALLOWED_FIELDS = new Set(['status', 'start_time', 'end_time', 'title', 'cost', 'location']);
+const ALLOWED_FIELDS = new Set(['status', 'start_time', 'end_time', 'title', 'cost', 'location', 'delay_minutes']);
 
 export async function POST(request: Request) {
   try {
@@ -25,11 +25,11 @@ export async function POST(request: Request) {
     }[];
 
     // Group changes by booking_id so we can do one update per booking
-    const changeMap = new Map<string, Record<string, string>>();
+    const changeMap = new Map<string, Record<string, any>>();
     for (const change of changes) {
       if (!ALLOWED_FIELDS.has(change.field)) continue;
       if (!changeMap.has(change.booking_id)) {
-        changeMap.set(change.booking_id, {});
+        changeMap.set(change.booking_id, { delay_minutes: 0 }); // Default clear delay when resolved
       }
       changeMap.get(change.booking_id)![change.field] = change.new_value;
     }

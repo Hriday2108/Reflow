@@ -7,7 +7,7 @@ import {
   Plane, Train, Hotel, Car, Ticket, CalendarDays,
   Clock, MapPin, IndianRupee, Shield, X, Maximize2, Minimize2, GripHorizontal, Users,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDuration } from '@/lib/utils';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   flight: Plane, train: Train, hotel: Hotel, transfer: Car, activity: Ticket, event: CalendarDays,
@@ -30,6 +30,7 @@ function fmt(iso: string) {
 interface BookingDetailPanelProps {
   booking: Booking | null;
   onClose: () => void;
+  onOpenDelayModal?: (booking: Booking) => void;
 }
 
 const MIN_W = 280;
@@ -37,9 +38,9 @@ const MAX_W = 560;
 const MIN_H = 260;
 const MAX_H = 640;
 const DEFAULT_W = 320;
-const DEFAULT_H = 400;
+const DEFAULT_H = 420;
 
-export default function BookingDetailPanel({ booking, onClose }: BookingDetailPanelProps) {
+export default function BookingDetailPanel({ booking, onClose, onOpenDelayModal }: BookingDetailPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [size, setSize] = useState({ w: DEFAULT_W, h: DEFAULT_H });
   const [pos, setPos] = useState({ x: 16, y: 16 });
@@ -108,7 +109,7 @@ export default function BookingDetailPanel({ booking, onClose }: BookingDetailPa
   const endDate = booking.end_time ? new Date(booking.end_time) : null;
 
   const panelW = expanded ? 480 : size.w;
-  const panelH = expanded ? 520 : size.h;
+  const panelH = expanded ? 540 : size.h;
 
   return (
     <AnimatePresence>
@@ -204,8 +205,8 @@ export default function BookingDetailPanel({ booking, onClose }: BookingDetailPa
           </div>
         </div>
 
-        {/* ── Status badge ─── */}
-        <div style={{ padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        {/* ── Status badge & Delay Pill ─── */}
+        <div style={{ padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'between' }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -216,10 +217,46 @@ export default function BookingDetailPanel({ booking, onClose }: BookingDetailPa
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, display: 'inline-block' }} />
             {cfg.label}
           </span>
+
+          {Boolean(booking.delay_minutes && booking.delay_minutes > 0) && (
+            <span style={{
+              marginLeft: 'auto',
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              fontSize: 10, fontWeight: 700,
+              padding: '4px 8px', borderRadius: 6,
+              background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
+              border: '1px solid rgba(245,158,11,0.3)',
+            }}>
+              <Clock style={{ width: 10, height: 10 }} />
+              +{formatDuration(booking.delay_minutes)} Delay
+            </span>
+          )}
         </div>
 
         {/* ── Details ─── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {Boolean(booking.delay_minutes && booking.delay_minutes > 0) && (
+            <div style={{
+              padding: '10px 12px',
+              borderRadius: 10,
+              background: 'rgba(245,158,11,0.1)',
+              border: '1px solid rgba(245,158,11,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}>
+              <Clock style={{ width: 16, height: 16, color: '#f59e0b', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: 9, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                  Active Disruption Delay
+                </p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b' }}>
+                  +{formatDuration(booking.delay_minutes)} ({booking.delay_minutes} minutes)
+                </p>
+              </div>
+            </div>
+          )}
+
           {booking.location && (
             <Row icon={MapPin} label="Location" value={booking.location} color={cfg.color} />
           )}
@@ -230,6 +267,32 @@ export default function BookingDetailPanel({ booking, onClose }: BookingDetailPa
           <Row icon={Users} label="Traveler" value={(booking as any).traveler_name || 'Alex Morgan'} color={cfg.color} />
           <Row icon={IndianRupee} label="Cost" value={formatCurrency(booking.cost)} color={cfg.color} />
           <Row icon={Shield} label="Refund" value={`${booking.refund_percent}%`} color={cfg.color} />
+
+          {/* Action button: Apply delay manually */}
+          {onOpenDelayModal && (booking.status === 'confirmed' || booking.status === 'at-risk') && (
+            <button
+              onClick={() => onOpenDelayModal(booking)}
+              style={{
+                marginTop: 6,
+                padding: '9px 12px',
+                borderRadius: 10,
+                background: 'rgba(245,158,11,0.12)',
+                border: '1px solid rgba(245,158,11,0.3)',
+                color: '#f59e0b',
+                fontWeight: 700,
+                fontSize: 11,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.15s',
+              }}
+            >
+              <Clock style={{ width: 13, height: 13 }} />
+              Configure Delay Manually
+            </button>
+          )}
 
           {booking.cancellation_policy && (
             <div style={{

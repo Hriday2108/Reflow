@@ -6,7 +6,7 @@ import {
   useNodesState, useEdgesState, BackgroundVariant, type Node, type Edge
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import type { Booking, BookingDependency } from '@/types';
+import type { Booking, BookingDependency, DisruptionEvent } from '@/types';
 import BookingNodeComponent from './booking-node';
 
 const nodeTypes = { bookingNode: BookingNodeComponent };
@@ -14,6 +14,7 @@ const nodeTypes = { bookingNode: BookingNodeComponent };
 interface ItineraryGraphProps {
   bookings: Booking[];
   dependencies: BookingDependency[];
+  disruptions?: DisruptionEvent[];
   selectedBookingId: string | null;
   onSelectBooking: (b: Booking) => void;
   selectableBookingIds?: string[];
@@ -22,7 +23,7 @@ interface ItineraryGraphProps {
 }
 
 export default function ItineraryGraph({
-  bookings, dependencies, selectedBookingId, onSelectBooking,
+  bookings, dependencies, disruptions = [], selectedBookingId, onSelectBooking,
   selectableBookingIds = [], isTargetSelectionActive = false, onConfirmTarget,
 }: ItineraryGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -63,6 +64,7 @@ export default function ItineraryGraph({
         position: b.position ?? { x: colIdx * colGap + 40, y: rowIdx * rowGap + 40 },
         data: {
           booking: b,
+          disruption: disruptions.find((d) => d.booking_id === b.id),
           isSelected: selectedBookingId === b.id,
           onSelect: onSelectBooking,
           isTargetSelectionActive,
@@ -92,7 +94,7 @@ export default function ItineraryGraph({
 
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
-  }, [bookings, dependencies, selectedBookingId, isTargetSelectionActive, selectableBookingIds, onSelectBooking, onConfirmTarget, setNodes, setEdges]);
+  }, [bookings, dependencies, disruptions, selectedBookingId, isTargetSelectionActive, selectableBookingIds, onSelectBooking, onConfirmTarget, setNodes, setEdges]);
 
   return (
     <div style={{ width: '100%', height: '100%' }}>

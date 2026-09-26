@@ -40,6 +40,7 @@ export interface Booking {
   cancellation_policy: string | null;
   refund_percent: number;
   status: BookingStatus;
+  delay_minutes?: number;
   position: { x: number; y: number } | null;
 }
 
@@ -61,6 +62,7 @@ export interface DisruptionEvent {
   type: DisruptionType;
   severity: Severity;
   description: string | null;
+  delay_minutes?: number;
   created_at: string;
 }
 

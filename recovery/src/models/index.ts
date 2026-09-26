@@ -32,6 +32,7 @@ const bookingSchema = new Schema({
   cancellation_policy: { type: String, default: null },
   refund_percent: { type: Number, required: true },
   status: { type: String, required: true },
+  delay_minutes: { type: Number, default: 0 },
   position: {
     x: { type: Number },
     y: { type: Number }
@@ -60,6 +61,7 @@ const disruptionSchema = new Schema({
   type: { type: String, required: true },
   severity: { type: String, required: true },
   description: { type: String, default: null },
+  delay_minutes: { type: Number, default: 0 },
   created_at: { type: String, default: () => new Date().toISOString() },
 }, { _id: false });
 

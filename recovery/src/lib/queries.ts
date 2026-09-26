@@ -92,14 +92,15 @@ export async function createDisruption(
   type: DisruptionType,
   severity: Severity,
   description: string,
-  tripId?: string
+  tripId?: string,
+  delayMinutes?: number
 ): Promise<DisruptionEvent | null> {
   try {
     const url = tripId ? `/api/actions/disruptions?tripId=${tripId}` : '/api/actions/disruptions';
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookingId, type, severity, description })
+      body: JSON.stringify({ bookingId, type, severity, description, delayMinutes })
     });
     if (!res.ok) throw new Error('Failed to create disruption');
     return await res.json();
@@ -139,4 +140,3 @@ export async function resetDemo(tripId?: string): Promise<boolean> {
     return false;
   }
 }
-

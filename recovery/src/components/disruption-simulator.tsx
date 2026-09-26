@@ -25,8 +25,8 @@ export const scenarios: ScenarioConfig[] = [
   {
     id: 'flight-delay', label: 'Flight Delay', description: 'Technical hold or air traffic delay',
     icon: Clock, type: 'delay', severity: 'high', targetTypes: ['flight'],
-    accentColor: '#ef4444',
-    getDescription: (b) => `${b.title} delayed by 3h 15m due to late incoming aircraft.`,
+    accentColor: '#f59e0b',
+    getDescription: (b) => `${b.title} delayed by 1h 30m due to late incoming aircraft.`,
   },
   {
     id: 'flight-cancellation', label: 'Flight Cancellation', description: 'Grounded due to airline ops',
@@ -113,16 +113,18 @@ interface DisruptionSimulatorProps {
   bookings: Booking[];
   selectedBooking?: Booking | null;
   onClearSelection?: () => void;
-  onTrigger: (bookingId: string, type: DisruptionType, severity: Severity, description: string) => Promise<void>;
+  onTrigger: (bookingId: string, type: DisruptionType, severity: Severity, description: string, delayMinutes?: number) => Promise<void>;
   isLoading: boolean;
   targetSelectionScenario?: ScenarioConfig | null;
   onStartTargetSelection?: (scenario: ScenarioConfig, eligible: Booking[]) => void;
   onCancelTargetSelection?: () => void;
+  onOpenManualDelay?: (booking: Booking) => void;
 }
 
 export default function DisruptionSimulator({
-  bookings, onTrigger, isLoading,
+  bookings, selectedBooking, onTrigger, isLoading,
   targetSelectionScenario, onStartTargetSelection, onCancelTargetSelection,
+  onOpenManualDelay,
 }: DisruptionSimulatorProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [triggeringId, setTriggeringId] = useState<string | null>(null);
@@ -147,6 +149,13 @@ export default function DisruptionSimulator({
       toast.error(`No eligible bookings for "${scenario.label}"`);
       return;
     }
+
+    // If an eligible booking is already selected and it's a delay scenario, open manual modal immediately
+    if (selectedBooking && scenario.type === 'delay' && eligible.some(b => b.id === selectedBooking.id)) {
+      onOpenManualDelay?.(selectedBooking);
+      return;
+    }
+
     onStartTargetSelection?.(scenario, eligible);
   };
 
@@ -217,9 +226,16 @@ export default function DisruptionSimulator({
                     >
                       <Icon className="w-3.5 h-3.5" style={{ color: scenario.accentColor }} />
                     </div>
-                    {triggeringId === scenario.id && (
-                      <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                    )}
+                    <div className="flex items-center gap-1">
+                      {scenario.type === 'delay' && (
+                        <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 uppercase tracking-wider border border-amber-500/30">
+                          Manual
+                        </span>
+                      )}
+                      {triggeringId === scenario.id && (
+                        <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                      )}
+                    </div>
                   </div>
 
                   {/* Label */}

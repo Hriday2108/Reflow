@@ -13,6 +13,7 @@ import DisruptionSimulator, { type ScenarioConfig } from '@/components/disruptio
 import ImpactAnalysisPanel from '@/components/impact-analysis';
 import RecoveryOptions from '@/components/recovery-options';
 import BookingDetailPanel from '@/components/booking-detail-panel';
+import ManualDelayModal from '@/components/manual-delay-modal';
 import DashboardOverview from '@/components/views/dashboard-overview';
 import RiskMonitorView from '@/components/views/risk-monitor-view';
 import AlertsView from '@/components/views/alerts-view';
@@ -26,6 +27,7 @@ import {
   createDisruption, selectRecoveryOption, resetDemo,
 } from '@/lib/queries';
 import { computeImpactAnalysis, computeRiskWarnings } from '@/lib/disruption-engine';
+import { formatDuration } from '@/lib/utils';
 
 // Types
 import type {
@@ -43,10 +45,9 @@ import {
 
 export default function DashboardPage() {
   const searchParams = useSearchParams();
-  const tripId = searchParams.get('tripId') ?? undefined;
+  const tripId = searchParams.get('tripId') || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
-  // ── View state ─────────────────────────────────────────
-  const [activeView, setActiveView] = useState<SidebarView>('overview');
+  const [activeView, setActiveView] = useState<SidebarView>('itinerary');
   const { preferences } = usePreferences();
 
   // ── Data state ─────────────────────────────────────────
@@ -60,6 +61,12 @@ export default function DashboardPage() {
   const [targetSelectionScenario, setTargetSelectionScenario] = useState<ScenarioConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
+  
+  // Manual Delay Modal state
+  const [isDelayModalOpen, setIsDelayModalOpen] = useState(false);
+  const [delayModalBooking, setDelayModalBooking] = useState<Booking | null>(null);
+  const [isApplyingDelay, setIsApplyingDelay] = useState(false);
+
   // Tracks whether the user manually dismissed the impact panel
   const impactDismissedRef = useRef(false);
   const [impactDismissed, setImpactDismissed] = useState(false);
@@ -152,11 +159,11 @@ export default function DashboardPage() {
 
   // ── Handlers ───────────────────────────────────────────
   const handleTriggerDisruption = useCallback(
-    async (bookingId: string, type: DisruptionType, severity: Severity, description: string) => {
+    async (bookingId: string, type: DisruptionType, severity: Severity, description: string, delayMinutes?: number) => {
       // Reset dismissed flag so the new disruption's impact is shown
       impactDismissedRef.current = false;
       setImpactDismissed(false);
-      const disruption = await createDisruption(bookingId, type, severity, description, tripId);
+      const disruption = await createDisruption(bookingId, type, severity, description, tripId, delayMinutes);
       if (disruption) {
         await loadData();
         // Switch to impact view automatically
@@ -166,6 +173,32 @@ export default function DashboardPage() {
       }
     },
     [loadData, tripId]
+  );
+
+  const handleOpenManualDelay = useCallback((booking: Booking) => {
+    setDelayModalBooking(booking);
+    setIsDelayModalOpen(true);
+  }, []);
+
+  const handleApplyManualDelay = useCallback(
+    async (booking: Booking, delayMinutes: number, reason: string) => {
+      setIsApplyingDelay(true);
+      try {
+        const severity: Severity = delayMinutes >= 120 ? 'high' : delayMinutes >= 45 ? 'medium' : 'low';
+        const description = `${booking.title} delayed by ${formatDuration(delayMinutes)} due to ${reason}.`;
+        await handleTriggerDisruption(booking.id, 'delay', severity, description, delayMinutes);
+        setIsDelayModalOpen(false);
+        setDelayModalBooking(null);
+        toast.success(`Manual Delay Applied (+${formatDuration(delayMinutes)})`, {
+          description: `${booking.title} is now delayed by ${formatDuration(delayMinutes)}. Recovery plans generated.`,
+        });
+      } catch (err) {
+        toast.error('Failed to apply manual delay');
+      } finally {
+        setIsApplyingDelay(false);
+      }
+    },
+    [handleTriggerDisruption]
   );
 
   const handleSelectRecovery = useCallback(
@@ -201,7 +234,7 @@ export default function DashboardPage() {
     setSelectedBooking(null);
     setTargetSelectionScenario(scenario);
     setActiveView('itinerary'); // switch to itinerary for node selection
-  }, [tripId]);
+  }, []);
 
   const handleCancelTargetSelection = useCallback(() => setTargetSelectionScenario(null), []);
 
@@ -211,6 +244,14 @@ export default function DashboardPage() {
       const scenario = targetSelectionScenario;
       setTargetSelectionScenario(null);
       setSelectedBooking(booking);
+
+      // If it's a delay scenario, prompt manual delay modal for user input!
+      if (scenario.type === 'delay') {
+        setDelayModalBooking(booking);
+        setIsDelayModalOpen(true);
+        return;
+      }
+
       try {
         await handleTriggerDisruption(booking.id, scenario.type, scenario.severity, scenario.getDescription(booking));
         toast.success(`${scenario.label} simulated`, { description: `Affected booking: ${booking.title}` });
@@ -387,7 +428,7 @@ export default function DashboardPage() {
                     <div className="flex-shrink-0 mx-3 mt-3 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/30">
                       <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                       <p className="text-sm font-medium flex-1">
-                        Click a <span className="text-primary font-bold">{targetSelectionScenario.targetTypes.join(' or ')}</span> node to simulate <span className="text-primary font-bold">{targetSelectionScenario.label}</span>
+                        Click a <span className="text-primary font-bold">{targetSelectionScenario.targetTypes.join(' or ')}</span> node to configure <span className="text-primary font-bold">{targetSelectionScenario.label}</span>
                       </p>
                       <button onClick={handleCancelTargetSelection} className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-border/50 transition-colors">
                         Cancel
@@ -400,6 +441,7 @@ export default function DashboardPage() {
                     <ItineraryGraph
                       bookings={filteredBookings}
                       dependencies={dependencies}
+                      disruptions={disruptions}
                       selectedBookingId={selectedBooking?.id ?? null}
                       onSelectBooking={handleSelectBooking}
                       selectableBookingIds={selectableBookingIds}
@@ -412,6 +454,7 @@ export default function DashboardPage() {
                       <BookingDetailPanel
                         booking={selectedBooking}
                         onClose={() => setSelectedBooking(null)}
+                        onOpenDelayModal={handleOpenManualDelay}
                       />
                     )}
 
@@ -442,7 +485,7 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                {/* Right panel — Disruption Simulator only (no booking detail here) */}
+                {/* Right panel — Disruption Simulator only */}
                 <div className="w-[340px] flex-shrink-0 border-l border-border/30 bg-card/30 flex flex-col overflow-hidden hidden lg:flex">
                   <div className="flex-1 min-h-0">
                     <DisruptionSimulator
@@ -454,6 +497,7 @@ export default function DashboardPage() {
                       targetSelectionScenario={targetSelectionScenario}
                       onStartTargetSelection={handleStartTargetSelection}
                       onCancelTargetSelection={handleCancelTargetSelection}
+                      onOpenManualDelay={handleOpenManualDelay}
                     />
                   </div>
                 </div>
@@ -524,7 +568,18 @@ export default function DashboardPage() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Interactive Manual Delay Modal */}
+      <ManualDelayModal
+        isOpen={isDelayModalOpen}
+        booking={delayModalBooking}
+        onClose={() => {
+          setIsDelayModalOpen(false);
+          setDelayModalBooking(null);
+        }}
+        onApplyDelay={handleApplyManualDelay}
+        isLoading={isApplyingDelay}
+      />
     </div>
   );
 }
-
