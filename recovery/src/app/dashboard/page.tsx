@@ -14,11 +14,14 @@ import ImpactAnalysisPanel from '@/components/impact-analysis';
 import RecoveryOptions from '@/components/recovery-options';
 import BookingDetailPanel from '@/components/booking-detail-panel';
 import ManualDelayModal from '@/components/manual-delay-modal';
+import HotelExtendModal from '@/components/hotel-extend-modal';
 import DashboardOverview from '@/components/views/dashboard-overview';
 import RiskMonitorView from '@/components/views/risk-monitor-view';
 import AlertsView from '@/components/views/alerts-view';
 import PreferencesView from '@/components/views/preferences-view';
 import WeatherView from '@/components/views/weather-view';
+import MapView from '@/components/views/map-view';
+import DigitalTwinView from '@/components/views/digital-twin-view';
 
 // Queries & engine
 import {
@@ -37,6 +40,7 @@ import type {
 
 // Preferences
 import { usePreferences } from '@/context/preferences-context';
+import { useAuth } from '@/context/auth-context';
 
 // Icons
 import {
@@ -49,6 +53,7 @@ export default function DashboardPage() {
 
   const [activeView, setActiveView] = useState<SidebarView>('itinerary');
   const { preferences } = usePreferences();
+  const { isAuthenticated, openAuth } = useAuth();
 
   // ── Data state ─────────────────────────────────────────
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -66,6 +71,8 @@ export default function DashboardPage() {
   const [isDelayModalOpen, setIsDelayModalOpen] = useState(false);
   const [delayModalBooking, setDelayModalBooking] = useState<Booking | null>(null);
   const [isApplyingDelay, setIsApplyingDelay] = useState(false);
+
+  const [extendModalBooking, setExtendModalBooking] = useState<Booking | null>(null);
 
   // Tracks whether the user manually dismissed the impact panel
   const impactDismissedRef = useRef(false);
@@ -178,6 +185,10 @@ export default function DashboardPage() {
   const handleOpenManualDelay = useCallback((booking: Booking) => {
     setDelayModalBooking(booking);
     setIsDelayModalOpen(true);
+  }, []);
+
+  const handleExtendStay = useCallback((booking: Booking) => {
+    setExtendModalBooking(booking);
   }, []);
 
   const handleApplyManualDelay = useCallback(
@@ -455,6 +466,7 @@ export default function DashboardPage() {
                         booking={selectedBooking}
                         onClose={() => setSelectedBooking(null)}
                         onOpenDelayModal={handleOpenManualDelay}
+                        onExtendStay={handleExtendStay}
                       />
                     )}
 
@@ -521,7 +533,21 @@ export default function DashboardPage() {
                       <ImpactAnalysisPanel analyses={impactAnalysis} />
                     </div>
                   )}
-                  {activeDisruptionOptions.length > 0 ? (
+                  {!isAuthenticated ? (
+                    <div className="glass-card rounded-2xl p-12 text-center">
+                      <RefreshCw className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+                      <p className="text-sm font-medium">Sign in to view recovery plans</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Recovery options are available once you're signed in.
+                      </p>
+                      <button
+                        onClick={() => openAuth()}
+                        className="mt-4 px-5 py-2 rounded-lg bg-primary/10 border border-primary/20 text-sm text-primary font-medium hover:bg-primary/15 transition-colors"
+                      >
+                        Sign in to continue →
+                      </button>
+                    </div>
+                  ) : activeDisruptionOptions.length > 0 ? (
                     <RecoveryOptions options={activeDisruptionOptions} onSelectOption={handleSelectRecovery} maxCost={preferences.maxCost} />
                   ) : (
                     <div className="glass-card rounded-2xl p-12 text-center">
@@ -565,6 +591,24 @@ export default function DashboardPage() {
                 <WeatherView bookings={filteredBookings} dependencies={dependencies} onNavigate={setActiveView} />
               </motion.div>
             )}
+
+            {activeView === 'map' && (
+              <motion.div key="map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 overflow-hidden">
+                <MapView tripId={tripId} onNavigate={setActiveView} />
+              </motion.div>
+            )}
+
+            {activeView === 'twin' && (
+              <motion.div key="twin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 overflow-hidden">
+                <DigitalTwinView
+                  bookings={filteredBookings}
+                  dependencies={dependencies}
+                  tripId={tripId}
+                  onInjectDisruption={handleTriggerDisruption}
+                  onNavigate={setActiveView}
+                />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
@@ -579,6 +623,20 @@ export default function DashboardPage() {
         }}
         onApplyDelay={handleApplyManualDelay}
         isLoading={isApplyingDelay}
+      />
+
+      {/* Extend Hotel Stay Modal */}
+      <HotelExtendModal
+        key={extendModalBooking?.id ?? 'none'}
+        isOpen={Boolean(extendModalBooking)}
+        booking={extendModalBooking}
+        onClose={() => setExtendModalBooking(null)}
+        onExtended={() => {
+          loadData();
+          toast.success('Hotel stay extended', {
+            description: 'Checkout date, cost, and downstream bookings updated.',
+          });
+        }}
       />
     </div>
   );

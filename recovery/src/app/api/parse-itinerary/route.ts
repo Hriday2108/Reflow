@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type, Schema } from '@google/genai';
 import dbConnect from '@/lib/db';
 import { TripModel, BookingModel, DependencyModel } from '@/models';
+import { retrievePolicyContext } from '@/lib/policy-retrieval';
+import { getHotelRate, toDateStr } from '@/lib/hotel-api';
+import { extractCityFromLocation } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(req: NextRequest) {
@@ -52,12 +55,12 @@ export async function POST(req: NextRequest) {
         location: { type: Type.STRING, description: 'City, airport, or specific venue' },
         start_time: { type: Type.STRING, description: 'Departure or check-in ISO 8601 string' },
         end_time: { type: Type.STRING, description: 'Arrival or check-out ISO 8601 string or null' },
-        cost: { type: Type.NUMBER, description: 'Cost in USD (estimate reasonable market cost if missing)' },
-        cancellation_policy: { type: Type.STRING, description: 'Cancellation rules or terms' },
-        refund_percent: { type: Type.NUMBER, description: 'Estimated refund percentage (0 to 100)' },
+        cost: { type: Type.NUMBER, description: 'Cost in USD. If the document states the price in another currency (e.g. INR), convert it to its approximate USD value. Use null if no price is explicitly present — do NOT estimate or invent.', nullable: true },
+        cancellation_policy: { type: Type.STRING, description: 'Cancellation rules or terms exactly as stated. Use null if not present — do NOT invent.', nullable: true },
+        refund_percent: { type: Type.NUMBER, description: 'Refund percentage (0 to 100) only if explicitly stated. Use null if not present — do NOT estimate.', nullable: true },
         status: { type: Type.STRING, enum: ['confirmed', 'cancelled', 'delayed', 'at-risk'] },
       },
-      required: ['type', 'title', 'start_time', 'cost', 'refund_percent', 'status'],
+      required: ['type', 'title', 'start_time', 'status'],
     };
 
     const tripResponseSchema: Schema = {
@@ -85,8 +88,10 @@ export async function POST(req: NextRequest) {
       4. All individual bookings (flights, trains, transfers, hotel stays, tours) in strict chronological order.
 
       Rules:
-      - If cost is not explicitly written, estimate a realistic market rate in USD ($50 - $400 depending on type).
-      - If cancellation terms are not stated, set refund_percent to 100 for flexible or 50 for standard, and policy to "Standard Airline Policy".
+      - Extract ONLY information explicitly present in the document. Never invent facts.
+      - Costs must be expressed in USD. If the document lists a price in another currency (e.g. INR ₹, EUR €), convert it to its approximate USD value before returning it.
+      - If cost is not explicitly written, output null for cost. Do NOT estimate a market rate.
+      - If cancellation terms are not stated, output null for cancellation_policy and null for refund_percent. Do NOT guess a policy or refund percentage.
       - Set status to "confirmed" unless the document says cancelled.
       - Ensure all timestamps are valid ISO 8601 strings.
       ${rawText ? `\nAdditional text details:\n${rawText}` : ''}
@@ -164,6 +169,43 @@ export async function POST(req: NextRequest) {
     // 2. Create Bookings and sequential Dependency edges
     for (const b of tripData.bookings) {
       const bookingId = uuidv4();
+
+      // Preserve null when a value wasn't in the document (no fabrication).
+      let cost = b.cost != null ? Number(b.cost) : null;
+      const refundPercent = b.refund_percent != null ? Number(b.refund_percent) : null;
+      let cancellationPolicy: string | null = b.cancellation_policy ?? null;
+
+      // Hotel enrichment: when the document didn't state a cost or policy, fill
+      // the gap with REAL Booking.com data (never an invented number) for the
+      // stay's actual date range. Falls back silently on any failure.
+      if (b.type === 'hotel' && (cost == null || !cancellationPolicy) && b.start_time && b.end_time) {
+        const city = extractCityFromLocation(b.location || '') || b.location || '';
+        if (city) {
+          const rate = await getHotelRate({
+            city,
+            hotelName: b.title || '',
+            arrivalDate: toDateStr(b.start_time),
+            departureDate: toDateStr(b.end_time),
+          });
+          if (rate) {
+            if (cost == null) cost = rate.totalPrice;
+            if (!cancellationPolicy && rate.cancellationPolicy) {
+              cancellationPolicy = rate.cancellationPolicy;
+            }
+          }
+        }
+      }
+
+      // Optional RAG fill: when no policy was stated (and none from the hotel
+      // API), try to ground it from the knowledge base instead of leaving it
+      // permanently blank.
+      if (!cancellationPolicy) {
+        const chunks = await retrievePolicyContext(`${b.type} ${b.title} cancellation refund policy`, 1);
+        if (chunks.length > 0) {
+          cancellationPolicy = `Per policy: ${chunks[0].text.slice(0, 240)}… (source: ${chunks[0].source})`;
+        }
+      }
+
       const newBooking = {
         _id: bookingId,
         trip_id: tripId,
@@ -172,9 +214,9 @@ export async function POST(req: NextRequest) {
         location: b.location || null,
         start_time: b.start_time,
         end_time: b.end_time || null,
-        cost: Number(b.cost) || 100,
-        cancellation_policy: b.cancellation_policy || 'Standard Carrier Policy',
-        refund_percent: Number(b.refund_percent) ?? 100,
+        cost,
+        cancellation_policy: cancellationPolicy,
+        refund_percent: refundPercent,
         status: b.status || 'confirmed',
         position: { x: xOffset, y: 150 },
       };

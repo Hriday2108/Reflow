@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "npx tsx scripts/seed.ts"
+    "seed": "npx tsx scripts/seed.ts",
+    "ingest-policies": "npx tsx scripts/ingest-policies.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -18,13 +19,16 @@
     "dotenv": "^17.4.2",
     "framer-motion": "^13.1.1",
     "gsap": "^3.15.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^1.39.0",
     "mongoose": "^9.9.4",
     "next": "16.3.4",
     "next-themes": "^0.4.6",
+    "nodemailer": "^10.0.10",
     "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "react-leaflet": "^5.0.0",
     "recharts": "^3.10.1",
     "shadcn": "^4.19.1",
     "sonner": "^2.0.8",
@@ -34,7 +38,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",

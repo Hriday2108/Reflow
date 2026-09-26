@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CloudLightning, MapPin, Wind, Droplets, Eye, Thermometer, 
+import {
+  CloudLightning, MapPin, Wind, Droplets, Eye, Thermometer,
   RefreshCw, AlertTriangle, AlertCircle, ShieldAlert, ChevronRight, CheckCircle2,
-  Plane, Train, Car, Hotel, Ticket
+  Plane, Train, Car, Hotel, Ticket, MessageSquare, ExternalLink
 } from 'lucide-react';
 import { Booking, BookingDependency, DisruptionType, Severity } from '@/types';
 import type { SidebarView } from '@/components/sidebar';
 import type { WeatherData } from '@/lib/weather/provider';
+import type { SocialSignalDigest } from '@/lib/social-signals';
 import { calculateWeatherRisk, WeatherRiskResult } from '@/lib/weather/risk';
 import { cn } from '@/lib/utils';
 import ItineraryGraph from '@/components/itinerary-graph';
@@ -55,6 +56,33 @@ export default function WeatherView({ bookings, dependencies, onNavigate }: Weat
     if (selectedLocation) fetchWeather(selectedLocation);
   }, [selectedLocation, fetchWeather]);
 
+  // Live social signals: real public Reddit chatter about this location's weather.
+  const [signals, setSignals] = useState<SocialSignalDigest | null>(null);
+  const [signalsLoading, setSignalsLoading] = useState(false);
+
+  const fetchSignals = useCallback(async (loc: string, weatherTerm?: string) => {
+    if (!loc) return;
+    setSignalsLoading(true);
+    setSignals(null);
+    try {
+      const params = new URLSearchParams({ location: loc });
+      if (weatherTerm) params.set('weather', weatherTerm);
+      const res = await fetch(`/api/social-signals?${params.toString()}`);
+      const data = await res.json();
+      setSignals(data?.signals ?? null);
+    } catch (err) {
+      console.error(err);
+      setSignals(null);
+    } finally {
+      setSignalsLoading(false);
+    }
+  }, []);
+
+  // Re-run when the location changes or its weather condition resolves.
+  useEffect(() => {
+    if (selectedLocation && weather) fetchSignals(selectedLocation, weather.description);
+  }, [selectedLocation, weather, fetchSignals]);
+
   const risk: WeatherRiskResult | null = useMemo(() => {
     if (!weather) return null;
     return calculateWeatherRisk(weather);
@@ -83,6 +111,15 @@ export default function WeatherView({ bookings, dependencies, onNavigate }: Weat
       case 'HIGH': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
       case 'MODERATE': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default: return 'bg-green-500/20 text-green-400 border-green-500/30';
+    }
+  };
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment) {
+      case 'negative': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'mixed': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'positive': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      default: return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
     }
   };
 
@@ -340,6 +377,93 @@ export default function WeatherView({ bookings, dependencies, onNavigate }: Weat
                         </span>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* LIVE SOCIAL SIGNALS */}
+              <div className="rounded-2xl border border-border/30 bg-card/20 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5" /> Live Social Signals
+                  </h3>
+                  {signals && (
+                    <span className={cn("px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border", getSentimentColor(signals.sentiment))}>
+                      {signals.sentiment}
+                    </span>
+                  )}
+                </div>
+
+                {signalsLoading ? (
+                  <div className="flex items-center gap-3 py-6 text-sm text-muted-foreground">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Scanning public chatter…
+                  </div>
+                ) : !signals || signals.postCount === 0 ? (
+                  <div className="text-center py-6">
+                    <MessageSquare className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No public social chatter found for {selectedLocation} right now.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {signals.summary && (
+                      <p className="text-sm text-foreground/90 leading-relaxed">{signals.summary}</p>
+                    )}
+
+                    {signals.themes.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {signals.themes.map((t, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/60 border border-border/40 text-foreground/80">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {signals.emergingConditions.length > 0 && (
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1 mb-1.5">
+                          <AlertTriangle className="w-3 h-3" /> Emerging Conditions
+                        </span>
+                        <ul className="space-y-1">
+                          {signals.emergingConditions.map((c, i) => (
+                            <li key={i} className="text-sm text-foreground/80 flex items-start gap-2">
+                              <span className="text-amber-400 mt-0.5">•</span>
+                              <span>{c}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {signals.samplePosts.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        {signals.samplePosts.map((p, i) => (
+                          <a
+                            key={i}
+                            href={p.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block p-3 rounded-xl bg-background/50 border border-border/30 hover:border-primary/40 transition-colors group"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">{p.title}</span>
+                              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            </div>
+                            <div className="text-[10px] text-muted-foreground uppercase mt-1">
+                              {p.source}
+                              {p.publishedAt > 0 && ` • ${new Date(p.publishedAt).toLocaleDateString()}`}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="text-[10px] text-muted-foreground pt-1">
+                      Based on {signals.postCount} recent public report{signals.postCount === 1 ? '' : 's'} • source: Google News
+                    </p>
                   </div>
                 )}
               </div>

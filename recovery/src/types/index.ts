@@ -86,6 +86,8 @@ export interface RecoveryOption {
   percent_itinerary_affected: number;
   changes: BookingChange[];
   selected: boolean;
+  /** True when cost/refund figures are grounded in a retrieved policy chunk. */
+  policyVerified?: boolean;
 }
 
 // ── Impact Analysis ──────────────────────────────────────

@@ -5,10 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(usdAmount: number | string): string {
+export function formatCurrency(usdAmount: number | string | null | undefined): string {
+  // A genuinely absent cost (not extracted from the document, no market rate
+  // available) must render as "Not stated" rather than a fabricated ₹0.
+  if (usdAmount === null || usdAmount === undefined || usdAmount === '') return 'Not stated';
   const amount = typeof usdAmount === 'string' ? parseFloat(usdAmount) : usdAmount;
-  const rate = 94.61;
-  const inr = amount * rate;
+  if (Number.isNaN(amount)) return 'Not stated';
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',

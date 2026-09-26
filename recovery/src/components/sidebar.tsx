@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useAuth } from '@/context/auth-context';
 import {
   LayoutDashboard,
   Map,
@@ -19,12 +20,15 @@ import {
   Loader2,
   Compass,
   CloudLightning,
+  FlaskConical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type SidebarView =
   | 'overview'
   | 'itinerary'
+  | 'map'
+  | 'twin'
   | 'recovery'
   | 'risk'
   | 'weather'
@@ -42,6 +46,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'overview',     label: 'Dashboard',      icon: LayoutDashboard },
   { id: 'itinerary',    label: 'My Trips',        icon: Compass },
+  { id: 'map',          label: 'Map',             icon: Map },
+  { id: 'twin',         label: 'Digital Twin',    icon: FlaskConical },
   { id: 'recovery',     label: 'Recovery Plans',  icon: Wand2 },
   { id: 'risk',         label: 'Risk Monitor',    icon: ShieldAlert },
   { id: 'weather',      label: 'Weather & Risk',  icon: CloudLightning },
@@ -69,6 +75,11 @@ export default function AppSidebar({
   travelerName,
 }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const { user } = useAuth();
+
+  // Bottom-left row reflects the signed-in account, not the itinerary traveler.
+  const displayName = user?.name || user?.email || travelerName || 'Alex Morgan';
+  const displayAvatar = user?.avatar || null;
 
   const items = NAV_ITEMS.map((item) => {
     let badge: number | undefined;
@@ -170,9 +181,16 @@ export default function AppSidebar({
         {/* User avatar row */}
         {!collapsed && (
           <div className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <div className="user-avatar flex-shrink-0">{travelerName ? travelerName.charAt(0).toUpperCase() : 'A'}</div>
+            <div className="user-avatar flex-shrink-0">
+              {displayAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={displayAvatar} alt="" className="w-full h-full rounded-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold truncate">{travelerName ?? 'Alex Morgan'}</p>
+              <p className="text-xs font-semibold truncate">{displayName}</p>
               <span
                 className="text-[9px] font-bold px-1.5 py-0.5 rounded"
                 style={{ background: 'rgba(99,102,241,0.2)', color: '#818cf8' }}

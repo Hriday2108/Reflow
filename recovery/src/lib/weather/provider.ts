@@ -87,6 +87,44 @@ function generateLocationCandidates(location: string): string[] {
   return Array.from(candidates);
 }
 
+export interface GeoPoint {
+  lat: number;
+  lon: number;
+  name: string; // resolved place name from OWM
+}
+
+/**
+ * Resolve an itinerary location string to coordinates via OpenWeatherMap's
+ * direct geocoding API. Reuses generateLocationCandidates() so messy strings
+ * ("BLR Airport → Goa (Madgaon)") resolve the same way weather lookups do.
+ * Returns null on a missing key or if no candidate resolves — callers then
+ * treat the location as "not mappable" rather than guessing a coordinate.
+ */
+export async function geocodeLocation(location: string): Promise<GeoPoint | null> {
+  const apiKey = process.env.WEATHER_API_KEY;
+  if (!apiKey || apiKey === 'your_openweathermap_api_key_here') return null;
+  if (!location) return null;
+
+  for (const candidate of generateLocationCandidates(location)) {
+    try {
+      const q = encodeURIComponent(candidate);
+      const res = await fetch(
+        `https://api.openweathermap.org/geo/1.0/direct?q=${q}&limit=1&appid=${apiKey}`,
+        { next: { revalidate: 86400 } }
+      );
+      if (!res.ok) continue;
+      const arr = await res.json();
+      const hit = Array.isArray(arr) ? arr[0] : null;
+      if (hit && typeof hit.lat === 'number' && typeof hit.lon === 'number') {
+        return { lat: hit.lat, lon: hit.lon, name: hit.name || candidate };
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 export async function fetchWeatherForLocation(location: string): Promise<WeatherData | null> {
   const apiKey = process.env.WEATHER_API_KEY;
   if (!apiKey || apiKey === 'your_openweathermap_api_key_here') {

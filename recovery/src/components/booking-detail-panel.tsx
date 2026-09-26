@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Booking, BookingStatus } from '@/types';
 import {
   Plane, Train, Hotel, Car, Ticket, CalendarDays,
-  Clock, MapPin, IndianRupee, Shield, X, Maximize2, Minimize2, GripHorizontal, Users,
+  Clock, MapPin, IndianRupee, Shield, X, Maximize2, Minimize2, GripHorizontal, Users, CalendarPlus,
 } from 'lucide-react';
 import { formatCurrency, formatDuration } from '@/lib/utils';
 
@@ -31,6 +31,7 @@ interface BookingDetailPanelProps {
   booking: Booking | null;
   onClose: () => void;
   onOpenDelayModal?: (booking: Booking) => void;
+  onExtendStay?: (booking: Booking) => void;
 }
 
 const MIN_W = 280;
@@ -40,7 +41,7 @@ const MAX_H = 640;
 const DEFAULT_W = 320;
 const DEFAULT_H = 420;
 
-export default function BookingDetailPanel({ booking, onClose, onOpenDelayModal }: BookingDetailPanelProps) {
+export default function BookingDetailPanel({ booking, onClose, onOpenDelayModal, onExtendStay }: BookingDetailPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [size, setSize] = useState({ w: DEFAULT_W, h: DEFAULT_H });
   const [pos, setPos] = useState({ x: 16, y: 16 });
@@ -266,7 +267,33 @@ export default function BookingDetailPanel({ booking, onClose, onOpenDelayModal 
           )}
           <Row icon={Users} label="Traveler" value={(booking as any).traveler_name || 'Alex Morgan'} color={cfg.color} />
           <Row icon={IndianRupee} label="Cost" value={formatCurrency(booking.cost)} color={cfg.color} />
-          <Row icon={Shield} label="Refund" value={`${booking.refund_percent}%`} color={cfg.color} />
+          <Row icon={Shield} label="Refund" value={booking.refund_percent != null ? `${booking.refund_percent}%` : 'Not stated'} color={cfg.color} />
+
+          {/* Action button: Extend hotel stay */}
+          {onExtendStay && booking.type === 'hotel' && (
+            <button
+              onClick={() => onExtendStay(booking)}
+              style={{
+                marginTop: 6,
+                padding: '9px 12px',
+                borderRadius: 10,
+                background: 'rgba(16,185,129,0.12)',
+                border: '1px solid rgba(16,185,129,0.3)',
+                color: '#10b981',
+                fontWeight: 700,
+                fontSize: 11,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.15s',
+              }}
+            >
+              <CalendarPlus style={{ width: 13, height: 13 }} />
+              Extend Stay
+            </button>
+          )}
 
           {/* Action button: Apply delay manually */}
           {onOpenDelayModal && (booking.status === 'confirmed' || booking.status === 'at-risk') && (

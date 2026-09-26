@@ -9,7 +9,7 @@ import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   Wand2, Clock, IndianRupee, Star, CheckCircle2,
-  Loader2, ArrowRight, Plane, Train, Hotel, Car, Ticket, X, Info, Check
+  Loader2, ArrowRight, Plane, Train, Hotel, Car, Ticket, X, Info, Check, ShieldCheck, ShieldAlert
 } from 'lucide-react';
 
 interface RecoveryOptionsProps {
@@ -35,6 +35,22 @@ function RatingStars({ rating }: { rating: number }) {
         />
       ))}
     </div>
+  );
+}
+
+/** Badge indicating whether cost/refund figures are grounded in policy (RAG). */
+function PolicyBadge({ verified }: { verified?: boolean }) {
+  if (verified) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-confirmed/15 text-confirmed text-[10px] font-semibold">
+        <ShieldCheck className="w-3 h-3" /> Policy-verified
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 text-[10px] font-semibold">
+      <ShieldAlert className="w-3 h-3" /> Estimate
+    </span>
   );
 }
 
@@ -152,6 +168,7 @@ export default function RecoveryOptions({ options, onSelectOption, maxCost }: Re
                           {opt.label === 'Plan A' ? 'Minimum Disruption' : opt.label === 'Plan B' ? 'Cheapest Option' : opt.label === 'Plan C' ? 'Fastest Recovery' : 'Balanced Option'}
                         </p>
                       </div>
+                      <PolicyBadge verified={opt.policyVerified} />
                     </div>
 
                     {/* Change summary */}
@@ -319,6 +336,7 @@ export default function RecoveryOptions({ options, onSelectOption, maxCost }: Re
                 <div>
                   <h3 className="font-bold text-xl leading-tight text-foreground">{viewingOption.label}</h3>
                   <p className="text-sm text-muted-foreground mt-1">Review the specific changes this plan will make to your itinerary.</p>
+                  <div className="mt-2"><PolicyBadge verified={viewingOption.policyVerified} /></div>
                 </div>
                 <button
                   onClick={() => setViewingOption(null)}

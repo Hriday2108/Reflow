@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { BookingModel, DependencyModel, DisruptionModel, RecoveryOptionModel } from '@/models';
 import { getDownstreamBookingIds, generateRecoveryOptions } from '@/lib/disruption-engine';
+import { retrievePolicyContext } from '@/lib/policy-retrieval';
 
 const DEMO_TRIP_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -57,7 +58,16 @@ export async function POST(request: NextRequest) {
         downstreamBookings,
         bookings
       );
-      
+
+      // RAG grounding: retrieve relevant policy excerpts for this disruption.
+      // The recovery options themselves are computed by rule-based logic from
+      // real booking costs, so we don't ask an LLM to invent numbers. We use
+      // retrieval only to flag whether the cost/refund figures are backed by a
+      // known policy ("Policy-verified") or remain a rule-based estimate.
+      const policyQuery = `${type} ${severity} ${affectedBooking.type} ${affectedBooking.title} cancellation refund rebooking policy`;
+      const policyChunks = await retrievePolicyContext(policyQuery);
+      const policyVerified = policyChunks.length > 0;
+
       const optionsToInsert = options.map(opt => ({
         disruption_id: disruption._id,
         label: opt.label,
@@ -67,6 +77,7 @@ export async function POST(request: NextRequest) {
         percent_itinerary_affected: opt.percent_itinerary_affected,
         changes: opt.changes,
         selected: false,
+        policyVerified,
       }));
       
       if (optionsToInsert.length > 0) {

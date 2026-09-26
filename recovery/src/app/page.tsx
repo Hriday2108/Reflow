@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useRef } from 'react';
 import StrokeText from '@/components/StrokeText';
+import { useAuth } from '@/context/auth-context';
 import {
   Plane,
   Train,
@@ -84,6 +85,7 @@ const STATS = [
 
 export default function HomePage() {
   const router = useRouter();
+  const { user, isAuthenticated, openAuth, logout } = useAuth();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<'pdf' | 'text'>('pdf');
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: string; rawFile?: File } | null>(null);
@@ -223,6 +225,30 @@ export default function HomePage() {
             <a href="#features" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
             <a href="#demo" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Demo</a>
+            {isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-2 text-xs font-semibold text-foreground normal-case tracking-normal">
+                  {user?.avatar && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.avatar} alt="" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+                  )}
+                  {user?.name || user?.email}
+                </span>
+                <button
+                  onClick={logout}
+                  className="uppercase tracking-widest text-xs font-semibold hover:text-foreground transition-colors"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => openAuth()}
+                className="btn-wandor-secondary text-xs uppercase tracking-widest font-semibold px-4 py-2"
+              >
+                Sign In
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -307,8 +333,15 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex items-center justify-center gap-4"
           >
-            <button 
-              onClick={() => setIsUploadModalOpen(true)}
+            <button
+              onClick={() => {
+                if (isAuthenticated) {
+                  setIsUploadModalOpen(true);
+                } else {
+                  // Require sign-in first; resume the upload flow on success.
+                  openAuth(() => setIsUploadModalOpen(true));
+                }
+              }}
               className="btn-wandor-primary"
             >
               <Zap className="w-4 h-4" />
