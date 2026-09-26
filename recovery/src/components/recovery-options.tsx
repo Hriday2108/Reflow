@@ -365,21 +365,43 @@ export default function RecoveryOptions({ options, onSelectOption, maxCost }: Re
                 <div>
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Proposed Changes ({viewingOption.changes.length})</h4>
                   <div className="space-y-2">
-                    {viewingOption.changes.map((change, idx) => (
-                      <div key={idx} className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-start gap-3">
-                        <div className="mt-0.5 p-1 rounded-full bg-primary/20 text-primary">
-                          <Check className="w-3 h-3" />
+                    {viewingOption.changes.map((change, idx) => {
+                      // Only render display-level changes (skip internal timing duplicates that come in pairs)
+                      const isTime = change.field === 'start_time' || change.field === 'end_time';
+                      const isStatus = change.field === 'status';
+                      const isTitle = change.field === 'title';
+                      const isCost = change.field === 'cost';
+
+                      const formatVal = (val: string) => {
+                        if (isTime) {
+                          try { return new Date(val).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }); } catch { return val; }
+                        }
+                        if (isCost) return `₹${Number(val).toLocaleString('en-IN')}`;
+                        return val;
+                      };
+
+                      return (
+                        <div key={idx} className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-start gap-3">
+                          <div className="mt-0.5 p-1 rounded-full bg-primary/20 text-primary">
+                            <Check className="w-3 h-3" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium leading-relaxed">{change.description}</p>
+                            {(isStatus || isTime || isTitle || isCost) && (
+                              <div className="flex items-center gap-2 mt-1.5 text-xs">
+                                <span className="px-1.5 py-0.5 rounded bg-disrupted/20 text-disrupted font-mono">
+                                  {formatVal(change.old_value)}
+                                </span>
+                                <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                <span className="px-1.5 py-0.5 rounded bg-confirmed/20 text-confirmed font-mono">
+                                  {formatVal(change.new_value)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium leading-relaxed">{change.description}</p>
-                          {change.field === 'status' && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Status will change from <span className="uppercase text-[10px] tracking-wider text-disrupted">{change.old_value}</span> to <span className="uppercase text-[10px] tracking-wider text-confirmed">{change.new_value}</span>.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

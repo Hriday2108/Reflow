@@ -158,10 +158,24 @@ export async function fetchWeatherForLocation(location: string): Promise<Weather
       console.log(`[WEATHER FETCH] All candidates failed for "${location}". Falling back to Gemini API...`);
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const prompt = `Identify the nearest major city with a weather station for this travel itinerary location string: "${location}". This might be an airport, train station, or landmark. Return ONLY the exact city name (e.g. "Rome", "Mumbai", "New Delhi", "Goa"), nothing else. If you absolutely cannot determine any valid location, return "UNKNOWN".`;
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-      });
+      const candidateModels = [
+        'gemini-3.1-flash-lite',
+        'gemini-3.5-flash-lite',
+        'gemini-flash-latest',
+        'gemini-3.8-flash',
+      ];
+      let response: any = null;
+      for (const modelName of candidateModels) {
+        try {
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+          });
+          if (response?.text) break;
+        } catch {
+          continue;
+        }
+      }
       const aiCity = response.text ? response.text.trim() : '';
       
       if (aiCity && aiCity !== 'UNKNOWN') {

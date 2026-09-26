@@ -1,4 +1,12 @@
 import mongoose from 'mongoose';
+import dns from 'dns';
+
+// Fix for Windows/ISP DNS servers failing to resolve MongoDB SRV records
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Ignore if custom DNS cannot be set
+}
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -18,6 +26,12 @@ if (!cached) {
 }
 
 async function dbConnect() {
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+  } catch {
+    // Ignore if custom DNS cannot be set
+  }
+
   if (cached.conn) {
     return cached.conn;
   }

@@ -103,15 +103,41 @@ export async function POST(req: NextRequest) {
     }
     contents.push(promptText);
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
-      contents,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: tripResponseSchema,
-        temperature: 0.1,
-      },
-    });
+    const candidateModels = [
+      'gemini-3.1-flash-lite',
+      'gemini-3.5-flash-lite',
+      'gemini-flash-latest',
+      'gemini-3.8-flash',
+      'gemini-3.5-flash',
+    ];
+
+    let response: any = null;
+    let lastError: any = null;
+
+    for (const modelName of candidateModels) {
+      try {
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: tripResponseSchema,
+            temperature: 0.1,
+          },
+        });
+        if (response?.text) {
+          console.log(`[PARSE-ITINERARY] Successfully parsed with model: ${modelName}`);
+          break;
+        }
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[PARSE-ITINERARY] Model ${modelName} failed (${err?.message?.slice(0, 80)}). Trying next candidate...`);
+      }
+    }
+
+    if (!response || !response.text) {
+      throw lastError || new Error('All Gemini model candidates are temporarily unavailable. Please try again in a few moments.');
+    }
 
     const resultText = response.text;
     if (!resultText) {
@@ -177,8 +203,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ tripId });
   } catch (error: any) {
     console.error('Error in parse-itinerary route:', error);
+
+    let friendlyMessage = error?.message || 'Failed to process travel document.';
+    
+    // Check if error is serialized JSON from Google API
+    try {
+      const parsed = JSON.parse(error.message);
+      if (parsed?.error?.code === 429 || parsed?.error?.status === 'RESOURCE_EXHAUSTED') {
+        friendlyMessage = 'Gemini AI rate limit reached. Please wait a moment and try again.';
+      } else if (parsed?.error?.message) {
+        friendlyMessage = parsed.error.message;
+      }
+    } catch {
+      if (friendlyMessage.includes('429') || friendlyMessage.includes('quota') || friendlyMessage.includes('RESOURCE_EXHAUSTED')) {
+        friendlyMessage = 'Gemini AI rate limit reached. Please wait a moment and try again.';
+      }
+    }
+
     return NextResponse.json(
-      { error: error?.message || 'Failed to process travel document.' },
+      { error: friendlyMessage },
       { status: 500 }
     );
   }

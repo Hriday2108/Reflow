@@ -149,6 +149,51 @@ export function generateRecoveryOptions(
   }
 }
 
+// ── Time shift helpers ──────────────────────────────────
+
+function shiftTime(isoString: string, deltaMinutes: number): string {
+  const d = new Date(isoString);
+  d.setMinutes(d.getMinutes() + deltaMinutes);
+  return d.toISOString();
+}
+
+function generateTimingChanges(
+  bookings: Booking[],
+  deltaMinutes: number,
+  status: string
+): { booking_id: string; field: string; old_value: string; new_value: string; description: string }[] {
+  const changes: { booking_id: string; field: string; old_value: string; new_value: string; description: string }[] = [];
+  for (const b of bookings) {
+    // Shift start_time
+    changes.push({
+      booking_id: b.id,
+      field: 'start_time',
+      old_value: b.start_time,
+      new_value: shiftTime(b.start_time, deltaMinutes),
+      description: `Shift ${b.title} start time by +${deltaMinutes}m`,
+    });
+    // Shift end_time if present
+    if (b.end_time) {
+      changes.push({
+        booking_id: b.id,
+        field: 'end_time',
+        old_value: b.end_time,
+        new_value: shiftTime(b.end_time, deltaMinutes),
+        description: `Shift ${b.title} end time by +${deltaMinutes}m`,
+      });
+    }
+    // Status change
+    changes.push({
+      booking_id: b.id,
+      field: 'status',
+      old_value: b.status,
+      new_value: status,
+      description: `Update ${b.title} status to ${status}`,
+    });
+  }
+  return changes;
+}
+
 function generateDelayOptions(
   booking: Booking,
   downstream: Booking[],
@@ -172,13 +217,8 @@ function generateDelayOptions(
           new_value: 'confirmed',
           description: `Accept delay on ${booking.title} and adjust downstream timings`,
         },
-        ...downstream.map((b) => ({
-          booking_id: b.id,
-          field: 'status',
-          old_value: 'at-risk',
-          new_value: 'confirmed',
-          description: `Adjust ${b.title} timing to accommodate delay`,
-        })),
+        // Shift all downstream bookings by 120 min
+        ...generateTimingChanges(downstream, 120, 'confirmed'),
       ],
       selected: false,
     },
@@ -196,13 +236,8 @@ function generateDelayOptions(
           new_value: 'rebooked',
           description: `Rebook to next available ${booking.type} — minimal delay`,
         },
-        ...downstream.slice(0, 1).map((b) => ({
-          booking_id: b.id,
-          field: 'status',
-          old_value: 'at-risk',
-          new_value: 'confirmed',
-          description: `${b.title} adjusted to match new timing`,
-        })),
+        // Only first downstream shifted by 45 min; rest confirmed as-is
+        ...generateTimingChanges(downstream.slice(0, 1), 45, 'confirmed'),
         ...downstream.slice(1).map((b) => ({
           booking_id: b.id,
           field: 'status',
@@ -227,18 +262,14 @@ function generateDelayOptions(
           new_value: 'rebooked',
           description: `Switch to alternative ${booking.type === 'flight' ? 'train' : 'bus'} service`,
         },
-        ...downstream.map((b) => ({
-          booking_id: b.id,
-          field: 'status',
-          old_value: 'at-risk',
-          new_value: 'confirmed',
-          description: `${b.title} rescheduled to fit new arrival`,
-        })),
+        // Shift all downstream by 90 min
+        ...generateTimingChanges(downstream, 90, 'confirmed'),
       ],
       selected: false,
     },
   ];
 }
+
 
 function generateCancellationOptions(
   booking: Booking,
