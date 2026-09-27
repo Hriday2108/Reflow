@@ -558,10 +558,8 @@
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(245, 240, 232, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(181, 101, 29, 0.12);
+  background: transparent;
+  border-bottom: none;
 }
 
 /* ══════════════════════════════════════════════════════════
