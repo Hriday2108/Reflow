@@ -553,6 +553,11 @@
    WANDOR NAVBAR — clean white/cream bar, dark text
    ══════════════════════════════════════════════════════════ */
 .wandor-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
   background: rgba(245, 240, 232, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);

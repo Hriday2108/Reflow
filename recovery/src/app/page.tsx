@@ -96,15 +96,7 @@ export default function HomePage() {
   const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showNavbar, setShowNavbar] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowNavbar(window.scrollY > 2100);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleOpenUpload = () => {
     if (isAuthenticated) {
@@ -230,12 +222,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col text-foreground paper-bg">
-      {/* ── Navbar (Sticky after cinema scroll) ── */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 wandor-nav transition-all duration-300 ${
-          showNavbar ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-full pointer-events-none'
-        }`}
-      >
+      {/* ── Navbar (Always visible) ── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 wandor-nav">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(181,101,29,0.12)', border: '1px solid rgba(181,101,29,0.25)' }}>
@@ -243,17 +231,23 @@ export default function HomePage() {
             </div>
             <span className="text-lg font-bold tracking-widest" style={{ color: '#1a1a2e', fontFamily: 'var(--font-heading), Georgia, serif' }}>reflow</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>
-            <a href="#features" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
-            <a href="#how-it-works" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
+          <div className="flex items-center gap-3 sm:gap-6 text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>
+            <a href="#features" className="hidden lg:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
+            <a href="#how-it-works" className="hidden lg:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
+            <Link href="/dashboard">
+              <button className="btn-wandor-primary text-xs uppercase tracking-widest font-semibold px-2.5 sm:px-3.5 py-1.5 flex items-center gap-1.5">
+                <span>Launch Simulation</span>
+                <span aria-hidden="true">↗</span>
+              </button>
+            </Link>
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <span className="flex items-center gap-2 text-xs font-semibold text-foreground normal-case tracking-normal">
                   {user?.avatar && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={user.avatar} alt="" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
                   )}
-                  {user?.name || user?.email}
+                  <span className="hidden sm:inline">{user?.name || user?.email}</span>
                 </span>
                 <button
                   onClick={logout}
@@ -265,7 +259,7 @@ export default function HomePage() {
             ) : (
               <button
                 onClick={() => openAuth()}
-                className="btn-wandor-secondary text-xs uppercase tracking-widest font-semibold px-4 py-2"
+                className="btn-wandor-secondary text-xs uppercase tracking-widest font-semibold px-3 sm:px-4 py-1.5 sm:py-2"
               >
                 Sign In
               </button>

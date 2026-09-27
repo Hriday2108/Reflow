@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import './cinema-scroll.css';
 
@@ -209,27 +208,7 @@ export default function CinemaHero({ onOpenUpload, onExploreDashboard }: CinemaH
             src="https://raft-blast-61784561.figma.site/_assets/v11/16b5007d9c93971e26ffe4e0e3e37946f6bd538c.png"
           />
 
-          {/* Primary Navigation */}
-          <header className="site-header" aria-label="Primary navigation">
-            <Link href="#cinema" className="site-logo">
-              <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#10b981' }} />
-              REFLOW
-            </Link>
 
-            <div className="header-actions">
-              <button
-                type="button"
-                className="header-cta"
-                onClick={onExploreDashboard || (() => router.push('/dashboard'))}
-              >
-                <span>Launch Simulation</span>
-                <span aria-hidden="true">↗</span>
-              </button>
-              <div className="language-switcher" aria-label="System status">
-                <span style={{ color: '#10b981', fontSize: 13 }}>● LIVE</span>
-              </div>
-            </div>
-          </header>
 
           {/* Back Stack */}
           <div className="back-stack">
