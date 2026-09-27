@@ -47,12 +47,15 @@ export interface MapData {
 }
 
 // Route-style location strings ("Delhi (DEL) → Mumbai (BOM)") encode two
-// endpoints. Split only on arrow-like separators — never a plain hyphen, which
-// occurs inside real place names.
+// endpoints. Split on arrow-like separators and the word "to" (case-insensitive,
+// word-boundary) — never a plain hyphen, which occurs inside real place names.
 function splitRoute(loc: string): string[] {
   for (const sep of ['→', '->', '—', '–']) {
     if (loc.includes(sep)) return loc.split(sep).map((s) => s.trim()).filter(Boolean);
   }
+  // Match " to " as a word-boundary separator (e.g. "KSR Bengaluru to Mysuru Jn")
+  const toMatch = loc.match(/^(.+?)\s+to\s+(.+)$/i);
+  if (toMatch) return [toMatch[1].trim(), toMatch[2].trim()];
   return [loc.trim()];
 }
 
@@ -129,10 +132,19 @@ function looksLikeSettlement(g: GeoPoint): boolean {
 // geocoder resolve the *city* ("Florence, Mercato Centrale" → "Florence",
 // "New York (JFK)" → "New York") instead of a foreign namesake of the full
 // facility string (e.g. a "Mercato Centrale" night market in Cebu, Philippines).
+//
+// When the first comma-part looks like a street/landmark/POI (contains words like
+// "road", "street", "market", "mall", etc.), prefer the SECOND comma-part which
+// is typically the actual city name ("MG Road, Mysuru, Karnataka" → "Mysuru").
+const STREET_TOKENS = /\b(road|rd|street|st|lane|ln|avenue|ave|boulevard|blvd|nagar|colony|layout|market|mall|plaza|circle|cross|main|phase|sector|block|gate|chowk|marg|path|way|drive|place|square|enclave)\b/i;
 function cityToken(endpoint: string): string {
   const noParen = endpoint.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
-  const firstPart = noParen.split(',')[0].trim();
-  return firstPart || noParen;
+  const parts = noParen.split(',').map((s) => s.trim()).filter(Boolean);
+  if (parts.length >= 2 && STREET_TOKENS.test(parts[0])) {
+    // First part is a street/landmark — use the second part (the city).
+    return parts[1];
+  }
+  return parts[0] || noParen;
 }
 
 // Default region bias. Ambiguous place names (e.g. "Goa", "Mysuru") are steered
@@ -295,6 +307,15 @@ export async function GET(req: NextRequest) {
             ? await geocodeLocation(t.preciseQ, { countryHint: dominantCountry, precise: true })
             : null;
           precise = retry && sharesToken(t.preciseQ, retry.name) && !tooFar(retry) ? retry : null;
+        }
+
+        // If precise geocode returned nothing at all, retry with the country hint
+        // — MapTiler often resolves street-level queries when scoped to a country.
+        if (!precise && dominantCountry) {
+          const retryCountry = await geocodeLocation(t.preciseQ, { countryHint: dominantCountry, precise: true });
+          if (retryCountry && (!city || !tooFar(retryCountry))) {
+            precise = retryCountry;
+          }
         }
 
         if (precise) {
