@@ -103,6 +103,7 @@
 .cinema-scroll .shade,
 .cinema-scroll .scene-img,
 .cinema-scroll .site-header,
+.cinema-scroll .hero-subnav-action,
 .cinema-scroll .sights-slider,
 .cinema-scroll .sights-controls,
 .cinema-scroll .hero-title,
@@ -117,17 +118,14 @@
   background: #79b7dd;
 }
 
-/* Header */
-.cinema-scroll .site-header {
-  top: 0;
-  left: 0;
-  right: 0;
+/* Action below upper navbar */
+.cinema-scroll .hero-subnav-action {
+  top: clamp(74px, calc(64px + 1.8vh), 86px);
+  right: clamp(16px, 2.5vw, 36px);
   z-index: 10;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 32px;
-  color: rgba(253, 241, 225, 0.86);
+  gap: 14px;
   pointer-events: auto;
 }
 

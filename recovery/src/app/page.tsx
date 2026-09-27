@@ -232,14 +232,8 @@ export default function HomePage() {
             <span className="text-lg font-bold tracking-widest" style={{ color: '#1a1a2e', fontFamily: 'var(--font-heading), Georgia, serif' }}>reflow</span>
           </div>
           <div className="flex items-center gap-3 sm:gap-6 text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>
-            <a href="#features" className="hidden lg:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
-            <a href="#how-it-works" className="hidden lg:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
-            <Link href="/dashboard">
-              <button className="btn-wandor-primary text-xs uppercase tracking-widest font-semibold px-2.5 sm:px-3.5 py-1.5 flex items-center gap-1.5">
-                <span>Launch Simulation</span>
-                <span aria-hidden="true">↗</span>
-              </button>
-            </Link>
+            <a href="#features" className="hidden sm:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
+            <a href="#how-it-works" className="hidden sm:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
             {isAuthenticated ? (
               <div className="flex items-center gap-2 sm:gap-3">
                 <span className="flex items-center gap-2 text-xs font-semibold text-foreground normal-case tracking-normal">

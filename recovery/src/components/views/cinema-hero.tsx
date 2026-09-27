@@ -208,9 +208,20 @@ export default function CinemaHero({ onOpenUpload, onExploreDashboard }: CinemaH
             src="https://raft-blast-61784561.figma.site/_assets/v11/16b5007d9c93971e26ffe4e0e3e37946f6bd538c.png"
           />
 
-
-
-          {/* Back Stack */}
+          {/* Top action placed cleanly below the upper bar */}
+          <div className="hero-subnav-action" aria-label="Simulation quick launch">
+            <button
+              type="button"
+              className="header-cta"
+              onClick={onExploreDashboard || (() => router.push('/dashboard'))}
+            >
+              <span>Launch Simulation</span>
+              <span aria-hidden="true">↗</span>
+            </button>
+            <div className="language-switcher" aria-label="System status">
+              <span style={{ color: '#10b981', fontSize: 13, fontWeight: 700 }}>● LIVE</span>
+            </div>
+          </div>
           <div className="back-stack">
             <img
               className="scene-img back-img back-four"
