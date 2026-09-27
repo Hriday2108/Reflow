@@ -3,8 +3,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import StrokeText from '@/components/StrokeText';
+import CinemaHero from '@/components/views/cinema-hero';
 import { useAuth } from '@/context/auth-context';
 import {
   Plane,
@@ -95,6 +96,15 @@ export default function HomePage() {
   const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+
+  const handleOpenUpload = () => {
+    if (isAuthenticated) {
+      setIsUploadModalOpen(true);
+    } else {
+      openAuth(() => setIsUploadModalOpen(true));
+    }
+  };
 
   const handleFileSelect = (file: File) => {
     const sizeInKb = (file.size / 1024).toFixed(1) + ' KB';
@@ -212,7 +222,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col text-foreground paper-bg">
-      {/* ── Navbar ── */}
+      {/* ── Navbar (Always visible) ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 wandor-nav">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -221,18 +231,17 @@ export default function HomePage() {
             </div>
             <span className="text-lg font-bold tracking-widest" style={{ color: '#1a1a2e', fontFamily: 'var(--font-heading), Georgia, serif' }}>reflow</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>
-            <a href="#features" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
-            <a href="#how-it-works" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
-            <a href="#demo" className="hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Demo</a>
+          <div className="flex items-center gap-3 sm:gap-6 text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>
+            <a href="#features" className="hidden sm:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">Features</a>
+            <a href="#how-it-works" className="hidden sm:inline-block hover:text-foreground transition-colors uppercase tracking-widest text-xs font-semibold">How It Works</a>
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <span className="flex items-center gap-2 text-xs font-semibold text-foreground normal-case tracking-normal">
                   {user?.avatar && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={user.avatar} alt="" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
                   )}
-                  {user?.name || user?.email}
+                  <span className="hidden sm:inline">{user?.name || user?.email}</span>
                 </span>
                 <button
                   onClick={logout}
@@ -244,7 +253,7 @@ export default function HomePage() {
             ) : (
               <button
                 onClick={() => openAuth()}
-                className="btn-wandor-secondary text-xs uppercase tracking-widest font-semibold px-4 py-2"
+                className="btn-wandor-secondary text-xs uppercase tracking-widest font-semibold px-3 sm:px-4 py-1.5 sm:py-2"
               >
                 Sign In
               </button>
@@ -253,139 +262,23 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="relative pt-36 pb-24 px-6 overflow-hidden">
-        {/* Looping video background */}
-        <video
-          className="hero-video-bg"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/hero-poster.jpg"
-        >
-          <source src="/hero-background.mp4" type="video/mp4" />
-        </video>
-        <div className="hero-video-overlay" />
-        {/* Subtle dot grid, kept for texture over the video */}
-        <div className="absolute inset-0 z-[1] pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(181,101,29,0.10) 1px, transparent 1px)', backgroundSize: '36px 36px' }} />
+      {/* ── Cinematic Parallax Hero ── */}
+      <CinemaHero
+        onOpenUpload={handleOpenUpload}
+        onExploreDashboard={() => router.push('/dashboard')}
+      />
 
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="wandor-badge mb-8 mx-auto w-fit"
-          >
-            <Sparkles className="w-3.5 h-3.5" style={{ color: '#b5651d' }} />
-            <span>✈ Intelligent Travel Recovery Engine</span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] mb-6 flex flex-col items-center"
-            style={{ color: '#1a1a2e' }}
-          >
-            <span className="w-full max-w-[550px] sm:max-w-[700px] md:max-w-[900px] flex justify-center -my-2 md:-my-4">
-              <StrokeText 
-                text="When your journey is" 
-                strokeColor="#1a1a2e" 
-                fillColor="#1a1a2e" 
-                fontSize={76}
-                strokeWidth={2}
-              />
-            </span>
-            <span className="w-full max-w-[300px] sm:max-w-[400px] md:max-w-[500px] flex justify-center -my-2 md:-my-4">
-              <StrokeText 
-                text="disrupted," 
-                strokeColor="#b5651d" 
-                fillColor="#b5651d" 
-                fontSize={76}
-                strokeWidth={2}
-              />
-            </span>
-            <span className="w-full max-w-[650px] sm:max-w-[800px] md:max-w-[1000px] flex justify-center -my-2 md:-my-4">
-              <StrokeText 
-                text="your plans shouldn't be." 
-                strokeColor="#1a1a2e" 
-                fillColor="#1a1a2e" 
-                fontSize={76}
-                strokeWidth={2}
-              />
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-gray-800 font-medium drop-shadow-sm"
-          >
-            Reflow detects disruptions, understands their ripple effects across your entire itinerary,
-            and creates the best recovery options for your trip — instantly.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex items-center justify-center gap-4"
-          >
-            <button
-              onClick={() => {
-                if (isAuthenticated) {
-                  setIsUploadModalOpen(true);
-                } else {
-                  // Require sign-in first; resume the upload flow on success.
-                  openAuth(() => setIsUploadModalOpen(true));
-                }
-              }}
-              className="btn-wandor-primary"
-            >
-              <Zap className="w-4 h-4" />
-              Start Recovery
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <Link href="/dashboard">
-              <button className="btn-wandor-secondary">
-                Explore Demo
-              </button>
-            </Link>
-          </motion.div>
-
-          {/* Status legend */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex items-center justify-center gap-6 mt-12 text-xs font-bold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] tracking-wide"
-          >
-            {[
-              { color: '#2d6a4f', label: 'Confirmed' },
-              { color: '#c77b21', label: 'At Risk' },
-              { color: '#c0392b', label: 'Disrupted' },
-              { color: '#1a3c5e', label: 'Rebooked' },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                {s.label}
-              </div>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* Connected journey visualizer */}
+      {/* ── Connected Journey Visualizer ── */}
+      <section className="relative py-16 px-6 overflow-hidden" style={{ background: 'var(--background)' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.5 }}
-          className="max-w-4xl mx-auto mt-16 relative z-10"
+          className="max-w-4xl mx-auto relative z-10"
         >
           <div className="rounded-2xl p-6" style={{ background: 'rgba(255,252,245,0.85)', border: '1px solid rgba(181,101,29,0.15)', boxShadow: '0 4px 32px rgba(100,50,10,0.08)' }}>
             <p className="text-xs text-center mb-6 uppercase tracking-widest font-semibold" style={{ color: '#8b3e17' }}>
-              Connected Itinerary — Your Journey
+              Connected Itinerary — Your Journey State
             </p>
             <div className="flex items-center justify-center gap-0">
               {JOURNEY_NODES.map((node, idx) => {
@@ -560,54 +453,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Demo section ── */}
-      <section id="demo" className="py-24 px-6" style={{ borderTop: '1px solid rgba(181,101,29,0.15)', background: 'rgba(181,101,29,0.03)' }}>
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="rounded-3xl p-10 text-center"
-            style={{ background: 'rgba(255,252,245,0.9)', border: '1px solid rgba(181,101,29,0.20)', boxShadow: '0 8px 40px rgba(100,50,10,0.08)' }}
-          >
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(181,101,29,0.10)', border: '1px solid rgba(181,101,29,0.25)' }}>
-              <Shield className="w-8 h-8" style={{ color: '#8b3e17' }} />
-            </div>
-            <h2 className="font-heading text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: '#1a1a2e' }}>
-              See Reflow in Action
-            </h2>
-            <p className="max-w-lg mx-auto mb-8 leading-relaxed" style={{ color: 'oklch(0.50 0.025 70)' }}>
-              Experience a realistic 4-day Italy trip with 12 interconnected bookings.
-              Trigger a flight delay — watch the ripple effect cascade, analyze the impact,
-              compare recovery options, and apply the best plan.
-            </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 text-left">
-              {[
-                { icon: AlertTriangle, text: 'Trigger flight delays, cancellations, weather events', color: '#c0392b' },
-                { icon: BarChart3,    text: 'See downstream impact across all connected bookings', color: '#c77b21' },
-                { icon: CheckCircle2, text: 'Compare and apply the best recovery plan instantly',  color: '#2d6a4f' },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.text} className="flex items-start gap-3 rounded-xl p-4" style={{ background: 'rgba(181,101,29,0.05)', border: '1px solid rgba(181,101,29,0.12)' }}>
-                    <Icon className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: item.color }} />
-                    <span className="text-sm" style={{ color: 'oklch(0.45 0.025 70)' }}>{item.text}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <Link href="/dashboard">
-              <button className="btn-wandor-primary">
-                <Plane className="w-4 h-4" />
-                Launch Demo
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
 
       {/* ── Footer ── */}
       <footer className="py-8 px-6" style={{ borderTop: '1px solid rgba(181,101,29,0.15)' }}>
