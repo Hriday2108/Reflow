@@ -90,37 +90,141 @@ function generateLocationCandidates(location: string): string[] {
 export interface GeoPoint {
   lat: number;
   lon: number;
-  name: string; // resolved place name from OWM
+  name: string;      // resolved place name (short)
+  country?: string;  // ISO 3166 country code (uppercase), when known
+  label?: string;    // full resolved place name (e.g. "CSMT, Mumbai, Maharashtra, India")
+  placeType?: string[]; // MapTiler feature place_type(s), e.g. ["municipality"] / ["address"]
 }
 
 /**
- * Resolve an itinerary location string to coordinates via OpenWeatherMap's
- * direct geocoding API. Reuses generateLocationCandidates() so messy strings
- * ("BLR Airport → Goa (Madgaon)") resolve the same way weather lookups do.
- * Returns null on a missing key or if no candidate resolves — callers then
- * treat the location as "not mappable" rather than guessing a coordinate.
+ * Precise-mode candidates: preserve the *specific* point (station / airport /
+ * terminal / address) instead of collapsing to a city like
+ * generateLocationCandidates does for weather. We only strip parenthetical codes
+ * ("Delhi (DEL) Airport" → "Delhi Airport") and normalise whitespace — we do NOT
+ * reduce to the city name or apply the weather keyword map, so the geocoder can
+ * return the exact facility.
  */
-export async function geocodeLocation(location: string): Promise<GeoPoint | null> {
+function generatePreciseCandidates(location: string): string[] {
+  const out: string[] = [];
+  const raw = location.trim();
+  if (raw) out.push(raw);
+  const noParen = raw.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+  if (noParen && noParen !== raw) out.push(noParen);
+  return Array.from(new Set(out.filter(Boolean)));
+}
+
+/** Pull the ISO country code out of a MapTiler geocoding feature. */
+function countryFromMapTilerFeature(feat: any): string | undefined {
+  // MapTiler puts the ISO country code directly on the feature's properties
+  // (and on every `context` entry) as `country_code`, e.g. "us" / "it".
+  const direct = feat?.properties?.country_code;
+  if (typeof direct === 'string' && direct) return direct.toUpperCase();
+  const ctx = Array.isArray(feat?.context) ? feat.context : [];
+  for (const c of ctx) {
+    if (typeof c?.id === 'string' && c.id.startsWith('country') && typeof c?.country_code === 'string') {
+      return c.country_code.toUpperCase();
+    }
+  }
+  for (const c of ctx) {
+    if (typeof c?.country_code === 'string' && c.country_code) return c.country_code.toUpperCase();
+  }
+  return undefined;
+}
+
+/**
+ * MapTiler geocoding — relevance-ranked, so a prominent place (Goa, India) wins
+ * over an obscure namesake. `countryHint` (ISO code) restricts results to that
+ * country to disambiguate. Returns null on missing key / no result.
+ */
+async function geocodeViaMapTiler(query: string, countryHint?: string): Promise<GeoPoint | null> {
+  const key = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+  if (!key || key === 'your_maptiler_key_here') return null;
+  try {
+    const params = new URLSearchParams({ key, limit: '5', language: 'en' });
+    if (countryHint) params.set('country', countryHint.toLowerCase());
+    const res = await fetch(
+      `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?${params.toString()}`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const feats = Array.isArray(data?.features) ? data.features : [];
+    if (feats.length === 0) return null;
+    const top = feats[0]; // features are relevance-sorted
+    const center = top?.center;
+    if (!Array.isArray(center) || typeof center[0] !== 'number' || typeof center[1] !== 'number') return null;
+    return {
+      lat: center[1],
+      lon: center[0],
+      name: top?.text || query,
+      country: countryFromMapTilerFeature(top),
+      label: top?.place_name || top?.text || query,
+      placeType: Array.isArray(top?.place_type) ? top.place_type : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * OpenWeatherMap direct geocoding fallback. Requests up to 5 matches and, when a
+ * `countryHint` is given, both scopes the query (`q=city,COUNTRY`) and prefers a
+ * result in that country — instead of blindly taking the first global match.
+ */
+async function geocodeViaOWM(query: string, countryHint?: string): Promise<GeoPoint | null> {
   const apiKey = process.env.WEATHER_API_KEY;
   if (!apiKey || apiKey === 'your_openweathermap_api_key_here') return null;
-  if (!location) return null;
-
-  for (const candidate of generateLocationCandidates(location)) {
-    try {
-      const q = encodeURIComponent(candidate);
-      const res = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${q}&limit=1&appid=${apiKey}`,
-        { next: { revalidate: 86400 } }
-      );
-      if (!res.ok) continue;
-      const arr = await res.json();
-      const hit = Array.isArray(arr) ? arr[0] : null;
-      if (hit && typeof hit.lat === 'number' && typeof hit.lon === 'number') {
-        return { lat: hit.lat, lon: hit.lon, name: hit.name || candidate };
-      }
-    } catch {
-      continue;
+  try {
+    const q = countryHint ? `${query},${countryHint}` : query;
+    const res = await fetch(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=5&appid=${apiKey}`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return null;
+    const arr = await res.json();
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    let hit = arr[0];
+    if (countryHint) {
+      hit = arr.find((h: any) => (h?.country || '').toUpperCase() === countryHint.toUpperCase()) || arr[0];
     }
+    if (typeof hit?.lat !== 'number' || typeof hit?.lon !== 'number') return null;
+    return {
+      lat: hit.lat,
+      lon: hit.lon,
+      name: hit.name || query,
+      country: (hit.country || '').toUpperCase() || undefined,
+      label: [hit.name, hit.state, hit.country].filter(Boolean).join(', ') || hit.name || query,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve a location string to coordinates. Tries MapTiler first
+ * (relevance-ranked), then OpenWeatherMap, across candidate variants. Pass
+ * `countryHint` (ISO code) to disambiguate cities that share a name across
+ * countries. Pass `precise: true` to resolve the exact facility
+ * (station/airport/terminal/address) instead of collapsing to the nearest city
+ * (which is what the weather lookups want). Returns null if nothing resolves.
+ */
+export async function geocodeLocation(
+  location: string,
+  opts: { countryHint?: string; precise?: boolean } = {}
+): Promise<GeoPoint | null> {
+  if (!location) return null;
+  const { countryHint, precise } = opts;
+  const candidates = precise
+    ? generatePreciseCandidates(location)
+    : generateLocationCandidates(location);
+
+  for (const candidate of candidates) {
+    const hit = await geocodeViaMapTiler(candidate, countryHint);
+    if (hit) return hit;
+  }
+  for (const candidate of candidates) {
+    const hit = await geocodeViaOWM(candidate, countryHint);
+    if (hit) return hit;
   }
   return null;
 }

@@ -4,9 +4,18 @@
 // because Leaflet touches `window` at module load and must run browser-only.
 
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, Tooltip, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import '@maplibre/maplibre-gl-leaflet';
 import type { MapData, MapPoint } from '@/app/api/map-data/route';
+
+// MapTiler key (public — inlined into the client bundle). When present the base
+// map is a MapTiler vector style with labels forced to English; when absent we
+// fall back to a no-key dark basemap so the map still renders.
+const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;
 
 // Booking-status → marker color (matches the app's status palette).
 const STATUS_COLOR: Record<string, string> = {
@@ -39,6 +48,53 @@ function FitBounds({ points }: { points: MapPoint[] }) {
   return null;
 }
 
+// MapTiler vector base layer (via the maplibre-gl-leaflet bridge). After every
+// style load, every symbol layer's label is rewritten to prefer the English name
+// (name:en → name:latin → local name), so place names render in English.
+function MapTilerLayer({ apiKey }: { apiKey: string }) {
+  const map = useMap();
+  useEffect(() => {
+    // The bridge reads `maplibregl` from global scope when the layer is created.
+    (window as unknown as { maplibregl: typeof maplibregl }).maplibregl = maplibregl;
+
+    const gl = (L as unknown as {
+      maplibreGL: (opts: Record<string, unknown>) => L.Layer & { getMaplibreMap: () => maplibregl.Map };
+    }).maplibreGL({
+      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
+      attribution:
+        '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    });
+    gl.addTo(map);
+
+    const glMap = gl.getMaplibreMap();
+    const localizeToEnglish = () => {
+      const style = glMap.getStyle();
+      if (!style?.layers) return;
+      for (const layer of style.layers) {
+        if (layer.type === 'symbol' && layer.layout && 'text-field' in layer.layout) {
+          try {
+            glMap.setLayoutProperty(layer.id, 'text-field', [
+              'coalesce',
+              ['get', 'name:en'],
+              ['get', 'name:latin'],
+              ['get', 'name'],
+            ]);
+          } catch {
+            /* icon-only symbol layers have no name field — skip */
+          }
+        }
+      }
+    };
+    glMap.on('styledata', localizeToEnglish);
+
+    return () => {
+      glMap.off('styledata', localizeToEnglish);
+      map.removeLayer(gl as unknown as L.Layer);
+    };
+  }, [map, apiKey]);
+  return null;
+}
+
 export default function MapCanvas({ data }: { data: MapData }) {
   const byId = useMemo(() => {
     const m = new Map<string, MapPoint>();
@@ -51,6 +107,14 @@ export default function MapCanvas({ data }: { data: MapData }) {
     () => data.route.map((id) => byId.get(id)).filter(Boolean).map((p) => [p!.lat, p!.lon] as [number, number]),
     [data.route, byId]
   );
+
+  // Itinerary sequence number per booking (1-based), following chronological
+  // route order so each marker's label reflects its position in the itinerary.
+  const orderById = useMemo(() => {
+    const m = new Map<string, number>();
+    data.route.forEach((id, i) => m.set(id, i + 1));
+    return m;
+  }, [data.route]);
 
   // Impact-propagation segments: any edge whose endpoints are both a disruption
   // source or downstream booking (the cascade), drawn distinctly in red.
@@ -79,10 +143,17 @@ export default function MapCanvas({ data }: { data: MapData }) {
       scrollWheelZoom
       style={{ height: '100%', width: '100%', background: '#0b1220' }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      {/* Base map: keyed MapTiler vector with English labels when configured,
+          else a no-key dark basemap so the map always renders. */}
+      {MAPTILER_KEY ? (
+        <MapTilerLayer apiKey={MAPTILER_KEY} />
+      ) : (
+        <TileLayer
+          attribution="Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ"
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={16}
+        />
+      )}
 
       <FitBounds points={data.points} />
 
@@ -99,6 +170,19 @@ export default function MapCanvas({ data }: { data: MapData }) {
       {data.points.map((p) => {
         const color = STATUS_COLOR[p.status] || '#3b82f6';
         const isCascade = p.impact === 'source' || p.impact === 'downstream';
+        const order = orderById.get(p.bookingId);
+        // Coincident markers (same coordinate) keep their true position but fan
+        // their labels out around the point so they don't stack on top of each
+        // other. First one sits above; the rest cycle around the compass.
+        const li = p.labelIndex || 0;
+        const LABEL_DIRS = ['top', 'right', 'bottom', 'left'] as const;
+        const labelDir = li === 0 ? 'top' : LABEL_DIRS[li % LABEL_DIRS.length];
+        const ring = li === 0 ? 0 : 8 + 14 * Math.ceil(li / LABEL_DIRS.length);
+        const labelOffset: [number, number] =
+          labelDir === 'top' ? [0, -6 - ring]
+          : labelDir === 'bottom' ? [0, 6 + ring]
+          : labelDir === 'right' ? [6 + ring, 0]
+          : [-6 - ring, 0];
         return (
           <CircleMarker
             key={p.bookingId}
@@ -111,6 +195,13 @@ export default function MapCanvas({ data }: { data: MapData }) {
               fillOpacity: 0.85,
             }}
           >
+            {/* Permanent English label so every itinerary stop is readable on the
+                map regardless of the region's local script, numbered in trip order.
+                Coincident stops fan their labels around the marker (see labelDir). */}
+            <Tooltip permanent direction={labelDir} offset={labelOffset} className="reflow-map-label">
+              <span style={{ fontWeight: 700 }}>{order ? `${order}. ` : ''}</span>
+              {p.location || p.title}
+            </Tooltip>
             <Popup>
               <div style={{ minWidth: 180 }}>
                 <div style={{ fontWeight: 700, marginBottom: 2 }}>{p.title}</div>

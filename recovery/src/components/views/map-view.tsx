@@ -53,6 +53,9 @@ export default function MapView({ tripId }: MapViewProps) {
   }, [tripId]);
 
   useEffect(() => {
+    // `load` is async and touches state only after its first await, so this is
+    // safe despite the rule's static check (matches the app's established pattern).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
